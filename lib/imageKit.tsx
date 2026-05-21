@@ -1,29 +1,24 @@
-// app/api/imagekit-auth/route.ts
 import { NextResponse } from "next/server";
 import ImageKit from "imagekit";
 
+// ImageKit initialization using official SDK on backend
+export const imagekit = new ImageKit({
+  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+});
+
 export async function GET() {
   try {
-    // Check karein ke server ko variables mil bhi rahe hain ya nahi
-    if (!process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_PRIVATE_KEY) {
-      console.error("❌ ImageKit Keys missing in environment variables!");
-      return NextResponse.json({ error: "Configuration missing on server" }, { status: 500 });
-    }
-
-    const imagekit = new ImageKit({
-      publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
-      privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
-      urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
-    });
-
+    // Generate secure auth parameters
     const authenticationParameters = imagekit.getAuthenticationParameters();
-    return NextResponse.json(authenticationParameters);
-  } catch (error: any) {
-    // Yeh line aapke terminal (VS Code backend log) me exact error print karegi
-    console.error("❌ ImageKit Server Crash Error:", error.message || error);
     
+    // Pure JSON response return karein
+    return NextResponse.json(authenticationParameters);
+  } catch (error) {
+    console.error("ImageKit Auth Error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error.message }, 
+      { error: "Failed to fetch authentication parameters" },
       { status: 500 }
     );
   }

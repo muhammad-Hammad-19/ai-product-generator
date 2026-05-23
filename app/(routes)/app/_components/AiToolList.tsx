@@ -34,7 +34,7 @@ const AiToolList = () => {
       image:
         "https://images.unsplash.com/photo-1600132806370-bf17e65e942f?q=80&w=500&auto=format&fit=crop",
       badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-      url: "/app/creative-ai-tools/product-images",
+      url: "/app/creative-ai-tools/product-avatar",
     },
   ];
 

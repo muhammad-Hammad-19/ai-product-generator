@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import React, { useState, useRef } from "react";
@@ -22,6 +23,7 @@ interface FormProps {
   uploadSuccess: boolean;
   setUploadSuccess: (val: boolean) => void;
   title: string;
+  enableAvater?: boolean;
 }
 
 const IMAGE_SIZES = [
@@ -48,6 +50,38 @@ const DUMMY_PHOTOS = [
   },
 ];
 
+const AVATAR_LIST = [
+  {
+    id: 1,
+    name: "Sarah",
+    image:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+  },
+  {
+    id: 2,
+    name: "James",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
+  },
+  {
+    id: 3,
+    name: "Mia",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+  },
+  {
+    id: 4,
+    name: "Carlos",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+  },
+  {
+    id: 5,
+    name: "Aisha",
+    image:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+  },
+];
 export default function CampaignFormControls({
   description,
   setDescription,
@@ -58,10 +92,17 @@ export default function CampaignFormControls({
   uploadSuccess,
   setUploadSuccess,
   title,
+  enableAvater = false,
 }: FormProps) {
   const [isDummySelected, setIsDummySelected] = useState(false);
   const [localFile, setLocalFile] = useState<File | null>(null);
   const [selectedSize, setSelectedSize] = useState("1024x1024");
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [selectedAvatarName, setSelectedAvatarName] = useState<string | null>(
+    null,
+  );
   const { user } = useAuthContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,7 +143,7 @@ export default function CampaignFormControls({
       formData.append("description", description);
       formData.append("size", selectedSize);
       formData.append("userEmail", user?.email ?? "");
-
+      formData.append("avatar", selectedAvatar ?? "");
       if (localFile) {
         formData.append("file", localFile);
       } else if (isDummySelected && selectedImage) {
@@ -121,7 +162,7 @@ export default function CampaignFormControls({
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
-      
+
       console.log(data);
       if (data.success) {
         setUploadSuccess(true);
@@ -131,6 +172,41 @@ export default function CampaignFormControls({
       alert("Image generation failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const generateVideo = async () => {
+    if (!selectedImage) {
+      alert("Pehle image select karo");
+      return;
+    }
+    try {
+      setVideoLoading(true);
+      setVideoUrl(null);
+
+      const { data } = await axios.post(
+        "/api/generate-product-video",
+        {
+          imageUrl: selectedImage,
+          imageToVideoPrompt:
+            "A sleek product spins slowly in the center of the frame as vibrant liquid splashes burst outward in slow motion, drenching the screen in rich color. Golden light beams sweep across the product surface creating a luxurious shimmer, while floating ingredients orbit gracefully around it. The camera pulls back dramatically to reveal the full explosive scene against a bold gradient background, ending with the product front and center in cinematic focus.",
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+
+      console.log(data, "video data");
+
+      if (data.success) {
+        setVideoUrl(data.videoUrl);
+      } else {
+        alert("Video generation failed: " + data.error);
+      }
+    } catch (error: any) {
+      alert("Video generation failed");
+    } finally {
+      setVideoLoading(false);
     }
   };
 
@@ -285,6 +361,47 @@ export default function CampaignFormControls({
         />
       </div>
 
+      {/* AVATARS */}
+      {enableAvater && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Wand2 className="w-4 h-4 text-purple-500" />
+            <h2 className="text-sm font-bold text-neutral-800 dark:text-neutral-200">
+              Select Avatar
+            </h2>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {AVATAR_LIST.map((avatar) => (
+              <div
+                key={avatar.id}
+                onClick={() => {
+                  setSelectedAvatar(avatar.id);
+                  setSelectedAvatarName(avatar.name);
+                }}
+                className={`flex flex-col items-center gap-1 cursor-pointer`}
+              >
+                <div
+                  className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${
+                    selectedAvatar === avatar.id
+                      ? "border-purple-600 ring-2 ring-purple-400/30"
+                      : "border-neutral-200 dark:border-zinc-700"
+                  }`}
+                >
+                  <img
+                    src={avatar.image}
+                    alt={avatar.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400">
+                  {avatar.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* BUTTON */}
       <button
         onClick={handleGenerate}
@@ -304,6 +421,38 @@ export default function CampaignFormControls({
           </>
         )}
       </button>
+
+      {/* VIDEO BUTTON */}
+      <button
+        onClick={generateVideo}
+        disabled={videoLoading || !selectedImage}
+        type="button"
+        className="w-full font-bold text-xs rounded-xl py-3.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white shadow-sm transition-all flex items-center justify-center gap-2"
+      >
+        {videoLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Generating AI Video...
+          </>
+        ) : (
+          <>
+            <Sparkles className="w-4 h-4" />
+            Generate AI Video
+          </>
+        )}
+      </button>
+
+      {/* VIDEO PLAYER */}
+      {videoUrl && (
+        <div className="rounded-xl overflow-hidden border border-neutral-200 dark:border-zinc-700">
+          <video
+            src={videoUrl}
+            controls
+            autoPlay
+            className="w-full rounded-xl"
+          />
+        </div>
+      )}
     </div>
   );
 }

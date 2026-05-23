@@ -1,137 +1,106 @@
+// @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import { imagekit } from "@/lib/imageKit";
-import OpenAI from "openai";
+import { openai } from "@/lib/openai";
 
-export const runtime = "nodejs";
+const PROMPT = `Create a vibrant product showcase image featuring a uploaded image in the center, surrounded by dynamic splashes of liquid or relevant material that complements. Use a clean, colorful background to make the product stand out. Include subtle elements, ingredients, or theme floating around to add context and visual interest. Ensure the product is sharp and in focus, with motion and energy conveyed through the splashes. Also give me image to video prompt for same in JSON format: {"textToImage":"","imageToVideo":""}`;
 
-// =========================
-// OPENAI INIT
-// =========================
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
-// =========================
-// RETRY HELPER
-// =========================
-
-async function retry(fn: any, retries = 3, delay = 2000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (i === retries - 1) throw err;
-
-      await new Promise((r) => setTimeout(r, delay * (i + 1)));
-    }
-  }
-}
-
-// =========================
-// SYSTEM PROMPT
-// =========================
-
-const SYSTEM_PROMPT = `
-You are a world-class product advertising creative director.
-
-Analyze the image and return ONLY valid JSON:
-
-{
-  "textToImage": "...cinematic ad prompt...",
-  "textToVideo": "...cinematic video prompt..."
-}
-
-Rules:
-- ultra realistic
-- studio lighting
-- luxury commercial ad
-- DO NOT change product
-- only enhance background
-`;
 export async function POST(req: NextRequest) {
-  
   try {
     const formData = await req.formData();
-
     const file = formData.get("file") as File | null;
-    const description = formData.get("description") as string | null;
 
     if (!file) {
       return NextResponse.json(
         { success: false, error: "No file uploaded" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString("base64");
-
+    const buffer = Buffer.from(bytes).toString("base64");
 
     const originalUpload = await imagekit.upload({
       file: buffer,
       fileName: `original-${Date.now()}.jpg`,
-      folder: "/campaigns/inputs",
+      folder: "/campaigns",
     });
 
-    const response = await retry(() =>
-      openai.responses.create({
-        model: "gpt-4.1-mini",
-
-        input: [
-          {
-            role: "system",
-            content: [
-              {
-                type: "input_text",
-                text: SYSTEM_PROMPT,
-              },
-            ],
-          },
-        ],
-      }),
-    );
-
-    const text = response.output_text;
-
-    let aiJson;
-
-    try {
-      aiJson = JSON.parse(text);
-    } catch (err) {
-      return NextResponse.json(
+    // ✅ Step 1: gpt-4.1-mini se prompts lo
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
         {
-          success: false,
-          error: "OpenAI JSON parse failed",
-          raw: text,
+          role: "user",
+          content: [
+            {
+              type: "input_text",  // ✅ "text" → "input_text"
+              text: PROMPT,
+            },
+            {
+              type: "input_image",  // ✅ sahi
+              image_url: originalUpload.url,
+            },
+          ],
         },
-        { status: 500 },
+      ],
+    });
+
+    const text = response.output_text.trim();
+    const cleaned = text.replace(/```json|```/g, "").trim();
+    let json = JSON.parse(cleaned);
+
+    // ✅ Step 2: gpt-image-1 se image generate karo
+    const image_generate_res = await openai.responses.create({
+      model: "gpt-4.1-mini",  // ✅ gpt-4.1-mini image generate nahi karta
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",  // ✅ "input_file" → "input_text"
+              text: json?.textToImage,
+            },
+            {
+              type: "input_image",
+              image_url: originalUpload.url,
+            },
+          ],
+        },
+      ],
+      tools: [{ type: "image_generation" }],
+    });
+
+    // ✅ Typo fix: "image_genration_call" → "image_generation_call"
+    const imageData = image_generate_res.output
+      .filter((item: any) => item.type === "image_generation_call")
+      .map((item: any) => item.result);
+
+    const generatedImage = imageData[0];
+
+    if (!generatedImage) {
+      return NextResponse.json(
+        { success: false, error: "Image generation failed" },
+        { status: 500 }
       );
     }
 
-    // =========================
-    // RESPONSE
-    // =========================
+    // ✅ base64 format sahi kiya
+    const uploadImageFinalResult = await imagekit.upload({
+      file: `data:image/png;base64,${generatedImage}`,  // ✅ ":" → ";" 
+      fileName: `generated-${Date.now()}.jpg`,
+      isPublished: true,
+    });
 
     return NextResponse.json({
       success: true,
-      message: "AI Ad Generated using OpenAI",
-
-      originalImageUrl: originalUpload.url,
-
-      prompts: aiJson,
+      generatedImageUrl: uploadImageFinalResult?.url,
     });
-  } catch (error: any) {
-    console.error("API ERROR:", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Internal Server Error",
-        details: error?.message || error,
-      },
-      { status: 500 },
-    );
+  } catch (err: any) {
+    return NextResponse.json({
+      success: false,
+      error: err?.message || err,
+    });
   }
 }

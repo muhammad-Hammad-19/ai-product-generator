@@ -24,7 +24,7 @@ const AiToolList = () => {
       image:
         "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=500&auto=format&fit=crop",
       badgeColor: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-      url: "/app/creative-ai-tools/product-images",
+      url: "/app/creative-ai-tools/product-video",
     },
     {
       id: 3,

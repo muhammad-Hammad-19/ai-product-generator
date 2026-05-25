@@ -5,33 +5,46 @@ import { Eye, Download, Sparkles, Heart, Loader2, X } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useAuthContext } from "@/app/provider";
 import { db } from "@/configs/firebaseConfig";
+import axios from "axios";
 
 const DUMMY_ADS = [
   {
     id: "d1",
-    generatedImageUrl: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&q=80",
-    originalImageUrl: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&q=80",
+    generatedImageUrl:
+      "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&q=80",
+    originalImageUrl:
+      "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500&q=80",
     size: "1024x1024",
-    prompts: { textToImage: "Fresh mango splash with vibrant colors and luxury feel" },
+    prompts: {
+      textToImage: "Fresh mango splash with vibrant colors and luxury feel",
+    },
   },
   {
     id: "d2",
-    generatedImageUrl: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&q=80",
-    originalImageUrl: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&q=80",
+    generatedImageUrl:
+      "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&q=80",
+    originalImageUrl:
+      "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&q=80",
     size: "1024x1536",
     prompts: { textToImage: "Cocktail burst campaign with cinematic lighting" },
   },
   {
     id: "d3",
-    generatedImageUrl: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80",
-    originalImageUrl: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80",
+    generatedImageUrl:
+      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80",
+    originalImageUrl:
+      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80",
     size: "1536x1024",
-    prompts: { textToImage: "Pizza studio shot with dynamic ingredients flying around" },
+    prompts: {
+      textToImage: "Pizza studio shot with dynamic ingredients flying around",
+    },
   },
   {
     id: "d4",
-    generatedImageUrl: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&q=80",
-    originalImageUrl: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&q=80",
+    generatedImageUrl:
+      "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&q=80",
+    originalImageUrl:
+      "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=500&q=80",
     size: "1024x1024",
     prompts: { textToImage: "Salad fresh drop with health campaign aesthetic" },
   },
@@ -60,6 +73,9 @@ export default function LiveEnginePreview() {
   const [loading, setLoading] = useState(false);
   const [selectedAd, setSelectedAd] = useState<any | null>(null); // ✅ modal state
 
+  const firstAd = ads[0];
+  const { originalImageUrl, id } = firstAd ?? {};
+
   useEffect(() => {
     if (user?.email) {
       fetchAds();
@@ -73,7 +89,7 @@ export default function LiveEnginePreview() {
       setLoading(true);
       const q = query(
         collection(db, "users-ads"),
-        where("userEmail", "==", user?.email)
+        where("userEmail", "==", user?.email),
       );
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -82,6 +98,31 @@ export default function LiveEnginePreview() {
       setAds(DUMMY_ADS);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateVideo = async () => {
+    try {
+      console.log("imageUrl:", originalImageUrl); // ← undefined hai?
+      console.log("docId:", id); // ← undefined hai?
+      console.log("uid:", user?.uid);
+      const { data } = await axios.post("/api/generate-product-video", {
+        imageUrl: originalImageUrl,
+        imageToVideoPrompt:
+          "A sleek product spins slowly in the center of the frame as vibrant liquid splashes burst outward in slow motion, drenching the screen in rich color. Golden light beams sweep across the product surface creating a luxurious shimmer, while floating ingredients orbit gracefully around it. The camera pulls back dramatically to reveal the full explosive scene against a bold gradient background, ending with the product front and center in cinematic focus.",
+        uid: user.uid,
+        docId: id,
+      });
+
+      console.log(data, "video data");
+
+      if (data.success) {
+        console.log(data.videoUrl);
+      } else {
+        alert("Video generation failed: " + data.error);
+      }
+    } catch (error: any) {
+      alert("Video generation failed");
     }
   };
 
@@ -113,7 +154,7 @@ export default function LiveEnginePreview() {
             >
               <div className="relative aspect-square overflow-hidden bg-neutral-50 dark:bg-zinc-950">
                 <img
-                  src={ad.generatedImageUrl}
+                  src={ad?.generatedImageUrl || ad?.originalImageUrl}
                   alt={`AI Generated Ad ${ad.id}`}
                   className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                 />
@@ -123,8 +164,13 @@ export default function LiveEnginePreview() {
               </div>
 
               <div className="p-3 space-y-3">
-                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate" title={ad.prompts?.textToImage}>
-                  {ad.prompts?.textToImage ? `${ad.prompts.textToImage.slice(0, 40)}...` : "AI Generated Ad"}
+                <p
+                  className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate"
+                  title={ad.prompts?.textToImage}
+                >
+                  {ad.prompts?.textToImage
+                    ? `${ad.prompts.textToImage.slice(0, 40)}...`
+                    : "AI Generated Ad"}
                 </p>
 
                 <div className="flex gap-1.5">
@@ -138,14 +184,22 @@ export default function LiveEnginePreview() {
                   </button>
 
                   <button
-                    onClick={() => handleDownload(ad.generatedImageUrl, ad.id)}
+                    onClick={() =>
+                      handleDownload(
+                        ad.generatedImageUrl || ad?.originalImageUrl,
+                        ad.id,
+                      )
+                    }
                     className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-blue-600 text-white text-[10px] font-medium hover:bg-blue-700 shadow-sm shadow-blue-500/10 transition-all"
                   >
                     <Download className="w-3 h-3" />
                     Save
                   </button>
 
-                  <button className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 text-[10px] font-medium border border-violet-100 dark:border-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-900/60 transition-all">
+                  <button
+                    onClick={() => generateVideo()}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 text-[10px] font-medium border border-violet-100 dark:border-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-900/60 transition-all"
+                  >
                     <Sparkles className="w-3 h-3" />
                     Animate
                   </button>
@@ -176,7 +230,7 @@ export default function LiveEnginePreview() {
 
             {/* Image */}
             <img
-              src={selectedAd.generatedImageUrl}
+              src={selectedAd.generatedImageUrl || selectedAd?.originalImageUrl}
               alt="Full View"
               className="w-full object-cover"
             />
@@ -189,7 +243,13 @@ export default function LiveEnginePreview() {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleDownload(selectedAd.generatedImageUrl, selectedAd.id)}
+                  onClick={() =>
+                    handleDownload(
+                      selectedAd?.generatedImageUrl ||
+                        selectedAd?.originalImageUrl,
+                      selectedAd?.id,
+                    )
+                  }
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all"
                 >
                   <Download className="w-3.5 h-3.5" />

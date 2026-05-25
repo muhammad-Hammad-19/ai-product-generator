@@ -17,17 +17,17 @@ function DashboardProvider({
 
   useEffect(() => {
     if (!user?.user && user.user) return router.replace("/");
-
-    user?.user && checkUser();
+    
+    user?.user;
   }, [user]);
 
-  const checkUser = async () => {
-    const result = await axios.post("/api/user", {
-      userName: user?.user?.displayName,
-      userEmail: user?.user?.email,
-    });
-    return result;
-  };
+  // const checkUser = async () => {
+  //   const result = await axios.post("/api/user", {
+  //     userName: user?.user?.displayName,
+  //     userEmail: user?.user?.email,
+  //   });
+  //   ;
+  // };
 
   return (
     <SidebarProvider>

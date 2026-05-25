@@ -77,21 +77,21 @@ export async function POST(req: NextRequest) {
 
     // Text generate for Image generation
 
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: avatar?.length > 2 ? AVATAR_PROMT : finalPrompt,
-            },
-            { type: "input_image", image_url: originalUpload.url },
-          ],
-        },
-      ],
-    });
+    // const response = await openai.responses.create({
+    //   model: "gpt-4.1-mini",
+    //   input: [
+    //     {
+    //       role: "user",
+    //       content: [
+    //         {
+    //           type: "input_text",
+    //           text: avatar?.length > 2 ? AVATAR_PROMT : finalPrompt,
+    //         },
+    //         { type: "input_image", image_url: originalUpload.url },
+    //       ],
+    //     },
+    //   ],
+    // });
 
     // const text = response.output_text.trim();
 
@@ -146,14 +146,14 @@ export async function POST(req: NextRequest) {
 
     // Save db
 
-    // await updateDoc(doc(db, "users-ads", docId), {
-    //   originalImageUrl: originalUpload.url,
-    //   // generatedImageUrl: uploadImageFinalResult?.url,
-    //   status: "completed",
-    //   credits: (userInfo?.credits ?? 0) - 5,
-    //   // imageToVideoPrompt: json?.imageToVideo,
-    //   prompts: json,
-    // });
+    await updateDoc(doc(db, "users-ads", docId), {
+      originalImageUrl: originalUpload.url,
+      // generatedImageUrl: uploadImageFinalResult?.url,
+      status: "completed",
+      credits: (userInfo?.credits ?? 0) - 5,
+      // imageToVideoPrompt: json?.imageToVideo,
+      prompts: /*json*/ PROMPT || description,
+    });
 
     return NextResponse.json({
       success: true,

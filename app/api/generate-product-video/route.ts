@@ -1,37 +1,102 @@
+// // @ts-nocheck
+// import { imagekit } from "@/lib/imageKit";
+// import { replicate } from "@/lib/replicate";
+// import { doc, updateDoc } from "firebase/firestore";
+// import { db } from "@/configs/firebaseConfig";
+// import { NextRequest, NextResponse } from "next/server";
+
+// export async function POST(req: NextRequest) {
+//   try {
+//     const { imageUrl, imageToVideoPrompt, uid, docId } = await req.json();
+
+//     const input = {
+//       image: imageUrl,
+//       prompt: imageToVideoPrompt,
+//     };
+
+//     // ✅ 1. "Panding" → "pending"
+//     await updateDoc(doc(db, "users-ads", docId), {
+//       imageToVideoStatus: "pending",
+//     });
+
+//     const output = await replicate.run("wan-video/wan-2.2-i2v-fast", { input });
+
+//     const res = await fetch(output.url());
+//     const videoBuffer = Buffer.from(await res.arrayBuffer());
+
+//     // ✅ 2. Date.name() → Date.now()
+//     const uploadResult = await imagekit.upload({
+//       file: videoBuffer,
+//       fileName: `video-${Date.now()}.mp4`,
+//       isPublished: true,
+//     });
+
+//     // ✅ 3. Ek baar updateDoc — duplicate hataya
+//     await updateDoc(doc(db, "users-ads", docId), {
+//       imageToVideoStatus: "completed",
+//       videoUrl: uploadResult.url,
+//     });
+//     const dummyVideoUrl =
+//       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+//     // ✅ 4. uploadResult.url string hai — .url() nahi, .url
+//     return NextResponse.json({
+//       success: true,
+//       videoUrl: uploadResult.url,
+//       dummyVideoUrl,
+//     });
+//   } catch (err: any) {
+//     console.log("Error details:", err.response?.data); // ✅ actual server error
+//     alert("Video generation failed");
+//   }
+// }
+
+//  that is dummy all
 // @ts-nocheck
 import { imagekit } from "@/lib/imageKit";
 import { replicate } from "@/lib/replicate";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/configs/firebaseConfig";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { imageUrl, imageToVideoPrompt, uid, docId } = await req.json();
+  try {
+    const { imageUrl, imageToVideoPrompt, uid, docId } = await req.json();
 
-  const input = {
-    image: imageUrl,
-    prompt: imageToVideoPrompt,
-  };
+    // ✅ Pending status
+    await updateDoc(doc(db, "users-ads", docId), {
+      imageToVideoStatus: "pending",
+    });
 
-  await updateDoc(doc(db, "users-ads", docId), {
-    imageToVideoStatus: "Panding..",
-  });
-  const output = await replicate.run("wan-video/wan-2.2-i2v-fast", { input });
+    // ✅ Dummy video — Replicate comment out (paid hai)
+    // const input = { image: imageUrl, prompt: imageToVideoPrompt };
+    // const output = await replicate.run("wan-video/wan-2.2-i2v-fast", { input });
+    // const res = await fetch(output.url());
+    // const videoBuffer = Buffer.from(await res.arrayBuffer());
+    // const uploadResult = await imagekit.upload({
+    //   file: videoBuffer,
+    //   fileName: `video-${Date.now()}.mp4`,
+    //   isPublished: true,
+    // });
+    // const videoUrl = uploadResult.url;
 
-  await updateDoc(doc(db, "users-ads", docId), {
-    imageToVideoStatus: "completed",
-  });
+    const videoUrl =
+      "https://youtu.be/2xXwikOCoEg";
+      
+    // ✅ Firestore update
+    await updateDoc(doc(db, "users-ads", docId), {
+      imageToVideoStatus: "completed",
+      videoUrl: videoUrl,
+    });
 
-  const res = await fetch(output.url());
-  const videoBuffer = Buffer.from(await res.arrayBuffer());
-
-  const uploadResult = await imagekit.upload({
-    file: videoBuffer,
-    fileName: `video${Date.name()}mp4`,
-    isPublished: true,
-  });
-
-  await updateDoc(doc(db, "users-ads", docId), {
-    imageToVideoStatus: "completed",
-    videoUrl: uploadResult.url,
-  });
-  return NextResponse.json(uploadResult.url());
+    return NextResponse.json({
+      success: true,
+      videoUrl: videoUrl,
+    });
+  } catch (err: any) {
+    console.log("Video generation error:", err?.message);
+    return NextResponse.json(
+      { success: false, error: err?.message || "Something went wrong" },
+      { status: 500 },
+    );
+  }
 }

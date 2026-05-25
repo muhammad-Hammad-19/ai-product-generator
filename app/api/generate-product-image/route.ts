@@ -12,10 +12,10 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/configs/firebaseConfig";
-import { text } from "stream/consumers";
 
 const PROMPT = `Create a vibrant product showcase image featuring a uploaded image in the center, surrounded by dynamic splashes of liquid or relevant material that complements. Use a clean, colorful background to make the product stand out. Include subtle elements, ingredients, or theme floating around to add context and visual interest. Ensure the product is sharp and in focus, with motion and energy conveyed through the splashes. Also give me image to video prompt for same in JSON format: {"textToImage":"","imageToVideo":""}`;
-const AVATAR_PROMT = `Place this avatar model wearing professional or casual outfit, standing or sitting next to the product in a realistic and natural way. The avatar should look friendly and engaging, presenting the product seamlessly for a social media ad.`;
+const AVATAR_PROMPT = `Place this avatar model wearing professional or casual outfit, standing or sitting next to the product in a realistic and natural way. The avatar should look friendly and engaging, presenting the product seamlessly for a social media ad. Also give me image to video prompt for same in JSON format: {"textToImage":"","imageToVideo":""}`;
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -39,11 +39,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ email field se match karo
     const q = query(collection(db, "users"), where("email", "==", userEmail));
     const snapshot = await getDocs(q);
 
-    // ✅ check karo user mila ya nahi
     if (snapshot.empty) {
       return NextResponse.json(
         { success: false, error: "User not found" },
@@ -54,7 +52,6 @@ export async function POST(req: NextRequest) {
     const userDoc = snapshot.docs[0];
     const userInfo = userDoc.data();
 
-    // ✅ doc() bracket fix
     const docId = Date.now().toString();
     await setDoc(doc(db, "users-ads", docId), {
       userEmail: userEmail,
@@ -71,96 +68,95 @@ export async function POST(req: NextRequest) {
       folder: "/campaigns",
     });
 
-    // const finalPrompt = description
-    //   ? `${PROMPT}\n\nExtra context: ${description}`
-    //   : PROMPT;
+    const finalPrompt = description
+      ? `${PROMPT}\n\nExtra context: ${description}`
+      : PROMPT;
 
-    // Text generate for Image generation
+    // ✅ 1. stream/consumers import hataya — response.output_text use karo
+    const response = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: avatar?.length > 2 ? AVATAR_PROMPT : finalPrompt,
+            },
+            { type: "input_image", image_url: originalUpload.url },
+          ],
+        },
+      ],
+    });
 
-    // const response = await openai.responses.create({
-    //   model: "gpt-4.1-mini",
-    //   input: [
-    //     {
-    //       role: "user",
-    //       content: [
-    //         {
-    //           type: "input_text",
-    //           text: avatar?.length > 2 ? AVATAR_PROMT : finalPrompt,
-    //         },
-    //         { type: "input_image", image_url: originalUpload.url },
-    //       ],
-    //     },
-    //   ],
-    // });
+    // ✅ 2. text variable sahi se banao
+    const rawText = response.output_text.trim();
+    const match = rawText.match(/\{[\s\S]*\}/);
 
-    // const text = response.output_text.trim();
+    if (!match) {
+      throw new Error("No JSON found in GPT response: " + rawText);
+    }
+    let json = JSON.parse(match[0]);
 
-    // // JSON block extract karo { } ke beech se
-    // const match = text.match(/\{[\s\S]*\}/);
-    // if (!match) {
-    //   throw new Error("No JSON found in GPT response: " + text);
-    // }
-    // let json = JSON.parse(match[0]);
+    // Image generate
+    const image_generate_res = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `${json?.textToImage}. Image size: ${size}`,
+            },
+            { type: "input_image", image_url: originalUpload.url },
+            // ✅ 3. avatar image type fix
+            ...(avatar?.length > 2
+              ? [{ type: "input_image", image_url: avatar }]
+              : []),
+          ],
+        },
+      ],
+      tools: [{ type: "image_generation" }],
+    });
 
-    // Image generate feature
+    const imageData = image_generate_res.output
+      .filter((item: any) => item.type === "image_generation_call")
+      .map((item: any) => item.result);
 
-    // const image_generate_res = await openai.responses.create({
-    //   model: "gpt-4.1-mini",
-    //   input: [
-    //     {
-    //       role: "user",
-    //       content: [
-    //         {
-    //           type: "input_text",
-    //           text: `${json?.textToImage}. Image size: ${size}`,
-    //         },
-    //         { type: "input_image", image_url: originalUpload.url },
-    //         ...(avatar?.length > 2
-    //           ? [{ text: "input_image", image_url: avatar }]
-    //           : []),
-    //       ],
-    //     },
-    //   ],
-    //   tools: [{ type: "image_generation" }],
-    // });
+    // ✅ 4. generatedImage sahi variable se lo
+    const generatedImage = imageData[0];
 
-    // const imageData = image_generate_res.output
-    //   .filter((item: any) => item.type === "image_generation_call")
-    //   .map((item: any) => item.result);
+    if (!generatedImage) {
+      return NextResponse.json(
+        { success: false, error: "Image generation failed" },
+        { status: 500 },
+      );
+    }
 
-    // const generatedImage = imageData[0];
+    const uploadImageFinalResult = await imagekit.upload({
+      file: `data:image/png;base64,${generatedImage}`,
+      fileName: `generated-${Date.now()}.jpg`,
+      isPublished: true,
+    });
 
-    // if (!generatedImage) {
-    //   return NextResponse.json(
-    //     { success: false, error: "Image generation failed" },
-    //     { status: 500 },
-    //   );
-    // }
-
-    // // Save ImageKit
-    // const uploadImageFinalResult = await imagekit.upload({
-    //   file: `data:image/png;base64,${generatedImage}`,
-    //   fileName: `generated-${Date.now()}.jpg`,
-    //   isPublished: true,
-    // });
-
-    // Save db
-
+    // ✅ 5. updateDoc ke baad NextResponse return karo
     await updateDoc(doc(db, "users-ads", docId), {
       originalImageUrl: originalUpload.url,
-      // generatedImageUrl: uploadImageFinalResult?.url,
+      generatedImageUrl: uploadImageFinalResult?.url,
       status: "completed",
       credits: (userInfo?.credits ?? 0) - 5,
-      // imageToVideoPrompt: json?.imageToVideo,
-      prompts: /*json*/ PROMPT || description,
+      imageToVideoPrompt: json?.imageToVideo,
+      prompts: json,
     });
 
     return NextResponse.json({
       success: true,
       originalImageUrl: originalUpload.url,
-      // generatedImageUrl: uploadImageFinalResult?.url,
-      // prompts: json,
+      generatedImageUrl: uploadImageFinalResult?.url,
+      prompts: json,
       size,
+      docId,
     });
   } catch (err: any) {
     return NextResponse.json({

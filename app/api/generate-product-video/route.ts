@@ -63,30 +63,40 @@ export async function POST(req: NextRequest) {
     const { imageUrl, imageToVideoPrompt, uid, docId } = await req.json();
 
     // ✅ Pending status
-    await updateDoc(doc(db, "users-ads", docId), {
-      imageToVideoStatus: "pending",
-    });
+
+    // await updateDoc(doc(db, "users-ads", docId), {
+    //   imageToVideoStatus: "pending",
+    // });
 
     // ✅ Dummy video — Replicate comment out (paid hai)
-    // const input = { image: imageUrl, prompt: imageToVideoPrompt };
-    // const output = await replicate.run("wan-video/wan-2.2-i2v-fast", { input });
-    // const res = await fetch(output.url());
-    // const videoBuffer = Buffer.from(await res.arrayBuffer());
-    // const uploadResult = await imagekit.upload({
-    //   file: videoBuffer,
-    //   fileName: `video-${Date.now()}.mp4`,
-    //   isPublished: true,
-    // });
-    // const videoUrl = uploadResult.url;
+    const input = { image: imageUrl, prompt: imageToVideoPrompt };
 
-    const videoUrl =
-      "https://youtu.be/2xXwikOCoEg";
-      
-    // ✅ Firestore update
-    await updateDoc(doc(db, "users-ads", docId), {
-      imageToVideoStatus: "completed",
-      videoUrl: videoUrl,
+    console.log(input, "inputs ======");
+
+    const output = await replicate.run("wan-video/wan-2.2-i2v-fast", { input });
+    const res = await fetch(output.url());
+    const videoBuffer = Buffer.from(await res.arrayBuffer());
+
+
+    const uploadResult = await imagekit.upload({
+      file: videoBuffer,
+      fileName: `video-${Date.now()}.mp4`,
+      isPublished: true,
     });
+    console.log(uploadResult.url, "updateurl=======");
+
+    const videoUrl = uploadResult.url || "hello";
+
+    // const videoUrl =
+    //   "https://youtu.be/2xXwikOCoEg";
+
+    // ✅ Firestore update
+    if (videoUrl) {
+      await updateDoc(doc(db, "users-ads", docId), {
+        imageToVideoStatus: "completed",
+        videoUrl: videoUrl,
+      });
+    }
 
     return NextResponse.json({
       success: true,

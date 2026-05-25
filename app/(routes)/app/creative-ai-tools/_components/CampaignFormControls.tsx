@@ -175,41 +175,6 @@ export default function CampaignFormControls({
     }
   };
 
-  const generateVideo = async () => {
-    if (!selectedImage) {
-      alert("Pehle image select karo");
-      return;
-    }
-    try {
-      setVideoLoading(true);
-      setVideoUrl(null);
-
-      const { data } = await axios.post(
-        "/api/generate-product-video",
-        {
-          imageUrl: selectedImage,
-          imageToVideoPrompt:
-            "A sleek product spins slowly in the center of the frame as vibrant liquid splashes burst outward in slow motion, drenching the screen in rich color. Golden light beams sweep across the product surface creating a luxurious shimmer, while floating ingredients orbit gracefully around it. The camera pulls back dramatically to reveal the full explosive scene against a bold gradient background, ending with the product front and center in cinematic focus.",
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-
-      console.log(data, "video data");
-
-      if (data.success) {
-        setVideoUrl(data.videoUrl);
-      } else {
-        alert("Video generation failed: " + data.error);
-      }
-    } catch (error: any) {
-      alert("Video generation failed");
-    } finally {
-      setVideoLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl p-4 md:p-6 shadow-sm max-w-md mx-auto">
       {/* HEADER */}
@@ -418,26 +383,6 @@ export default function CampaignFormControls({
           <>
             <Sparkles className="w-4 h-4" />
             Generate AI Ad
-          </>
-        )}
-      </button>
-
-      {/* VIDEO BUTTON */}
-      <button
-        onClick={generateVideo}
-        disabled={videoLoading || !selectedImage}
-        type="button"
-        className="w-full font-bold text-xs rounded-xl py-3.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white shadow-sm transition-all flex items-center justify-center gap-2"
-      >
-        {videoLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Generating AI Video...
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4" />
-            Generate AI Video
           </>
         )}
       </button>

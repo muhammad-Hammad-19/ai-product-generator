@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, Download, Sparkles, Heart, Loader2, X } from "lucide-react";
+import { Heart, Loader2, X } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useAuthContext } from "@/app/provider";
 import { db } from "@/configs/firebaseConfig";
@@ -12,132 +12,141 @@ const handleDownload = async (imageUrl: string, title: string) => {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${title}.jpg`;
+    link.download = `${title || "image"}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
     URL.revokeObjectURL(url);
-  } catch (error) {
+  } catch {
     alert("Download failed");
   }
 };
 
 export default function LiveEnginePreview() {
   const { user } = useAuthContext();
+
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedAd, setSelectedAd] = useState<any | null>(null); // ✅ modal state
+  const [selectedAd, setSelectedAd] = useState<any | null>(null);
 
-  const firstAd = ads[0];
-  const { originalImageUrl, id } = firstAd ?? {};
+  // ✅ FIX: per-ad loading (important)
+  const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.email) {
-      fetchAds();
-    } else {
-      setAds([]);
-    }
+    if (user?.email) fetchAds();
+    else setAds([]);
   }, [user]);
 
   const fetchAds = async () => {
     try {
       setLoading(true);
+
       const q = query(
         collection(db, "users-ads"),
         where("userEmail", "==", user?.email),
       );
+
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setAds(data.length > 0 ? data : []);
-    } catch (error) {
+
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setAds(data || []);
+    } catch {
       setAds([]);
     } finally {
       setLoading(false);
     }
-  }
-  
-  const generateVideo = async () => {
-    try {
-      console.log("imageUrl:", originalImageUrl); // ← undefined hai?
-      console.log("docId:", id); // ← undefined hai?
-      console.log("uid:", user?.uid);
-      const res = await axios.post("/api/generate-product-video", {
-        imageUrl: originalImageUrl,
-        imageToVideoPrompt:
-          "A sleek product spins slowly in the center of the frame as vibrant liquid splashes burst outward in slow motion, drenching the screen in rich color. Golden light beams sweep across the product surface creating a luxurious shimmer, while floating ingredients orbit gracefully around it. The camera pulls back dramatically to reveal the full explosive scene against a bold gradient background, ending with the product front and center in cinematic focus.",
-        uid: user.uid,
-        docId: id,
-      });
+  };
 
-      console.log(res, "video data");
+  // ✅ FIXED VIDEO GENERATION
+  const generateVideo = async (ad: any) => {
+    try {
+      const imageUrl = ad?.generatedImageUrl || ad?.originalImageUrl;
+
+      if (!imageUrl) {
+        alert("No image found");
+        return;
+      }
+
+      const res = await axios.post(
+        "/api/generate-product-video",
+        {
+          imageUrl,
+          prompt:
+            "A cinematic luxury product advertisement with slow rotation, dramatic lighting, liquid splash effects, ultra realistic studio look.",
+        },
+        {
+          withCredentials: true,
+        },
+      );
+      console.log(res.data);
 
       if (res.data.success) {
-        console.log(res.data.videoUrl);
+        alert("Video request sent");
+        console.log(res.data.data);
       } else {
-        alert("Video generation failed: " + res.data.error.me);
+        alert(res.data.error);
       }
-    } catch (error: any) {
-      alert(error.message);
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
   return (
     <div className="w-full">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-sm font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-2">
-          <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+        <h2 className="text-sm font-bold flex items-center gap-2">
+          <Heart className="w-4 h-4 text-rose-500" />
           AI Generated Ads
         </h2>
       </div>
 
       {/* LOADING */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin" />
         </div>
-      ) : ads?.length === 0 ? (
-        /* EMPTY STATE */
-        <div className="text-center py-16 text-neutral-500 dark:text-neutral-400 text-xs">
-          No ads generated yet. Create your first AI ad 🚀
+      ) : ads.length === 0 ? (
+        <div className="text-center py-16 text-xs text-gray-500">
+          No ads generated yet 🚀
         </div>
       ) : (
-        /* GRID */
         <div className="grid grid-cols-2 gap-4">
           {ads.map((ad) => (
             <div
               key={ad.id}
-              className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm group hover:shadow-md transition-all"
+              className="border rounded-2xl overflow-hidden bg-white dark:bg-zinc-900"
             >
               {/* IMAGE */}
-              <div className="relative aspect-square overflow-hidden bg-neutral-50 dark:bg-zinc-950">
+              <div className="aspect-square bg-black">
                 <img
                   src={
-                    ad?.generatedImageUrl ||
-                    ad?.originalImageUrl ||
+                    ad.generatedImageUrl ||
+                    ad.originalImageUrl ||
                     "/placeholder.png"
                   }
-                  alt="AI Ad"
-                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                  className="w-full h-full object-cover"
                 />
-
-                <div className="absolute top-2 left-2 bg-black/70 text-white text-[9px] px-2 py-0.5 rounded-md">
-                  {ad?.size || "1024x1024"}
-                </div>
               </div>
 
-              {/* CONTENT */}
-              <div className="p-3 space-y-3">
-                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                  {ad?.prompts?.textToImage || "AI Generated Advertisement"}
+              {/* BUTTONS */}
+              <div className="p-3 space-y-2">
+                <p className="text-xs truncate">
+                  {ad?.prompts?.textToImage || "AI Ad"}
                 </p>
 
-                <div className="flex gap-1.5">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedAd(ad)}
-                    className="flex-1 py-1.5 text-[10px] rounded-xl bg-neutral-100 dark:bg-zinc-800"
+                    className="flex-1 text-xs py-1 rounded bg-gray-100"
                   >
                     View
                   </button>
@@ -145,17 +154,22 @@ export default function LiveEnginePreview() {
                   <button
                     onClick={() =>
                       handleDownload(
-                        ad?.generatedImageUrl || ad?.originalImageUrl,
-                        ad?.id,
+                        ad.generatedImageUrl || ad.originalImageUrl,
+                        ad.id,
                       )
                     }
-                    className="flex-1 py-1.5 text-[10px] rounded-xl bg-blue-600 text-white"
+                    className="flex-1 text-xs py-1 rounded bg-blue-600 text-white"
                   >
                     Save
                   </button>
 
-                  <button className="flex-1 py-1.5 text-[10px] rounded-xl bg-violet-100 dark:bg-violet-950 text-violet-600">
-                    Animate
+                  {/* ✅ FIXED ANIMATE BUTTON */}
+                  <button
+                    onClick={() => generateVideo(ad)}
+                    disabled={loadingVideoId === ad.id}
+                    className="flex-1 text-xs py-1 rounded bg-purple-100 text-purple-700 disabled:opacity-50"
+                  >
+                    {loadingVideoId === ad.id ? "Generating..." : "Animate"}
                   </button>
                 </div>
               </div>
@@ -167,57 +181,59 @@ export default function LiveEnginePreview() {
       {/* MODAL */}
       {selectedAd && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4"
           onClick={() => setSelectedAd(null)}
         >
           <div
-            className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-lg overflow-hidden"
+            className="bg-white dark:bg-zinc-900 rounded-2xl max-w-lg w-full relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* CLOSE */}
             <button
               onClick={() => setSelectedAd(null)}
-              className="absolute top-3 right-3 bg-black/60 text-white p-1 rounded-full"
+              className="absolute top-3 right-3 text-white bg-black/60 p-1 rounded-full"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* IMAGE */}
-            <div className="max-h-[70vh] overflow-hidden bg-black">
-              <img
-                src={
-                  selectedAd?.generatedImageUrl ||
-                  selectedAd?.originalImageUrl ||
-                  "/placeholder.png"
-                }
-                alt="Ad Preview"
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <img
+              src={
+                selectedAd.generatedImageUrl ||
+                selectedAd.originalImageUrl ||
+                "/placeholder.png"
+              }
+              className="w-full max-h-[70vh] object-contain bg-black"
+            />
 
-            {/* FOOTER */}
+            {/* ACTIONS */}
             <div className="p-4 space-y-3">
-              <p className="text-xs text-neutral-700 dark:text-neutral-200">
-                {selectedAd?.prompts?.textToImage ||
-                  "AI Generated Advertisement"}
+              <p className="text-xs">
+                {selectedAd?.prompts?.textToImage || "AI Ad"}
               </p>
 
               <div className="flex gap-2">
                 <button
                   onClick={() =>
                     handleDownload(
-                      selectedAd?.generatedImageUrl ||
-                        selectedAd?.originalImageUrl,
-                      selectedAd?.id,
+                      selectedAd.generatedImageUrl ||
+                        selectedAd.originalImageUrl,
+                      selectedAd.id,
                     )
                   }
-                  className="flex-1 py-2 text-xs rounded-xl bg-blue-600 text-white"
+                  className="flex-1 text-xs py-2 rounded bg-blue-600 text-white"
                 >
                   Download
                 </button>
 
-                <button className="flex-1 py-2 text-xs rounded-xl bg-violet-100 dark:bg-violet-950 text-violet-600">
-                  Animate
+                <button
+                  onClick={() => generateVideo(selectedAd)}
+                  disabled={loadingVideoId === selectedAd.id}
+                  className="flex-1 text-xs py-2 rounded bg-purple-100 text-purple-700"
+                >
+                  {loadingVideoId === selectedAd.id
+                    ? "Generating..."
+                    : "Animate"}
                 </button>
               </div>
             </div>

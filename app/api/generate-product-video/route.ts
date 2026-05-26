@@ -14,7 +14,7 @@
 //     await updateDoc(doc(db, "users-ads", docId), {
 //       imageToVideoStatus: "pending",
 //     });
-    
+
 //     // ✅ Dummy video — Replicate comment out (paid hai)
 //     const input = { image: imageUrl, prompt: imageToVideoPrompt };
 
@@ -154,74 +154,125 @@
 //   }
 // }
 
+// import { NextRequest, NextResponse } from "next/server";
+// import fs from "fs";
+// import { GoogleGenAI } from "@google/genai";
 
+// const ai = new GoogleGenAI({
+//   apiKey: process.env.GEMINI_API_KEY!,
+// });
+
+// export async function POST(req: NextRequest) {
+//   try {
+//     const formData = await req.formData();
+
+//     const file = formData.get("image") as File | null;
+//     const prompt = (formData.get("prompt") as string) || "";
+
+//     if (!file) {
+//       return NextResponse.json(
+//         { success: false, error: "No image provided" },
+//         { status: 400 },
+//       );
+//     }
+
+//     // convert file → base64
+//     const bytes = await file.arrayBuffer();
+//     const base64Image = Buffer.from(bytes).toString("base64");
+
+//     // start video generation
+//     let operation = await ai.models.generateVideos({
+//       model: "veo-3.1-generate-preview",
+//       prompt,
+//       image: {
+//         imageBytes: base64Image,
+//         mimeType: file.type,
+//       },
+//       config: {
+//         aspectRatio: "16:9",
+//       },
+//     });
+
+//     // polling
+//     while (!operation.done) {
+//       await new Promise((r) => setTimeout(r, 10000));
+
+//       operation = await ai.operations.getVideosOperation({
+//         operation,
+//       });
+//     }
+
+//     const video = operation.response.generatedVideos?.[0];
+
+//     if (!video) {
+//       return NextResponse.json({
+//         success: false,
+//         error: "No video generated",
+//       });
+//     }
+
+//     return NextResponse.json({
+//       success: true,
+//       videoUrl: video.video,
+//     });
+//   } catch (err: any) {
+//     console.error(err);
+//     return NextResponse.json(
+//       { success: false, error: err.message || "Video generation failed" },
+//       { status: 500 },
+//     );
+//   }
+// }
 
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+import axios from "axios";
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
+    const body = await req.json();
+    const { imageUrl, prompt } = body;
+    console.log(imageUrl, "imageUrl", prompt, "Promt");
 
-    const file = formData.get("image") as File | null;
-    const prompt = (formData.get("prompt") as string) || "";
-
-    if (!file) {
+    if (!imageUrl || !prompt) {
       return NextResponse.json(
-        { success: false, error: "No image provided" },
-        { status: 400 }
+        { success: false, error: "Missing imageUrl or prompt" },
+        { status: 400 },
       );
     }
-
-    // convert file → base64
-    const bytes = await file.arrayBuffer();
-    const base64Image = Buffer.from(bytes).toString("base64");
-
-    // start video generation
-    let operation = await ai.models.generateVideos({
-      model: "veo-3.1-generate-preview",
-      prompt,
-      image: {
-        imageBytes: base64Image,
-        mimeType: file.type,
+    
+    const response = await axios.post(
+      "https://udayogra-images-to-video-v1.p.rapidapi.com/am",
+      {
+        image_url: imageUrl, // 👈 CHANGE THIS
+        prompt: prompt,
       },
-      config: {
-        aspectRatio: "16:9",
+      {
+        headers: {
+          "x-rapidapi-key": process.env.RAPID_API_KEY || "",
+          "x-rapidapi-host": "udayogra-images-to-video-v1.p.rapidapi.com",
+          "Content-Type": "application/json",
+        },
+        params: {
+          state: "videoapi",
+        },
       },
-    });
-
-    // polling
-    while (!operation.done) {
-      await new Promise((r) => setTimeout(r, 10000));
-
-      operation = await ai.operations.getVideosOperation({
-        operation,
-      });
-    }
-
-    const video = operation.response.generatedVideos?.[0];
-
-    if (!video) {
-      return NextResponse.json({
-        success: false,
-        error: "No video generated",
-      });
-    }
+    );
 
     return NextResponse.json({
       success: true,
-      videoUrl: video.video,
+      data: response,
+      imageUrl,
+      prompt,
     });
   } catch (err: any) {
-    console.error(err);
+    console.error("API ERROR:", err?.response?.data || err.message);
+
     return NextResponse.json(
-      { success: false, error: err.message || "Video generation failed" },
-      { status: 500 }
+      {
+        success: false,
+        error: err?.response?.data || err.message,
+      },
+      { status: 500 },
     );
   }
 }

@@ -7,25 +7,6 @@ import { useAuthContext } from "@/app/provider";
 import { db } from "@/configs/firebaseConfig";
 import axios from "axios";
 
-const handleDownload = async (imageUrl: string, title: string) => {
-  try {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${title || "image"}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-  } catch {
-    alert("Download failed");
-  }
-};
-
 export default function LiveEnginePreview() {
   const { user } = useAuthContext();
 
@@ -33,13 +14,49 @@ export default function LiveEnginePreview() {
   const [loading, setLoading] = useState(false);
   const [selectedAd, setSelectedAd] = useState<any | null>(null);
 
-  // ✅ FIX: per-ad loading (important)
+  // ✅ FIX: per-ad loading active state
   const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.email) fetchAds();
     else setAds([]);
   }, [user]);
+
+  // ✅ CORS BYPASS DOWNLOAD FUNCTION (UI Change Kiye Bagair)
+  const handleDownload = async (imageUrl: string, title: string) => {
+    console.log(imageUrl, "imageUrl");
+
+    try {
+      // Method 1: Pehle backend configuration ya reverse proxy standard system asset link processing run karein
+      const response = await fetch(imageUrl, {
+        mode: "cors",
+      });
+      
+      if (!response.ok) throw new Error("CORS validation failed");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title || "image"}.jpg`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.warn("CORS block detected, triggering absolute dynamic tab bypass:", error);
+      
+      // Method 2 (Ultimate Bypass): Agar browser image fetch data access block karega, 
+      // toh yeh image ko direct download format context ke sath new window stream mein open kar dega.
+      const win = window.open(imageUrl, "_blank");
+      if (!win) {
+        // Agar popup blocker trigger ho toh windows redirect path apply karein
+        window.location.href = imageUrl;
+      }
+    }
+  };
 
   const fetchAds = async () => {
     try {
@@ -65,7 +82,7 @@ export default function LiveEnginePreview() {
     }
   };
 
-  // ✅ FIXED VIDEO GENERATION
+  // ✅ FIXED VIDEO GENERATION LOGIC
   const generateVideo = async (ad: any) => {
     try {
       const imageUrl = ad?.generatedImageUrl || ad?.originalImageUrl;
@@ -74,6 +91,9 @@ export default function LiveEnginePreview() {
         alert("No image found");
         return;
       }
+
+      // ✅ FIX: Button par loading status dikhane ke liye state set ki
+      setLoadingVideoId(ad.id);
 
       const res = await axios.post(
         "/api/generate-product-video",
@@ -96,6 +116,9 @@ export default function LiveEnginePreview() {
       }
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      // ✅ FIX: Generation khatam hone ke baad loading status off
+      setLoadingVideoId(null);
     }
   };
 
@@ -134,6 +157,7 @@ export default function LiveEnginePreview() {
                     "/placeholder.png"
                   }
                   className="w-full h-full object-cover"
+                  alt="Creative asset"
                 />
               </div>
 
@@ -204,6 +228,7 @@ export default function LiveEnginePreview() {
                 "/placeholder.png"
               }
               className="w-full max-h-[70vh] object-contain bg-black"
+              alt="Modal Preview"
             />
 
             {/* ACTIONS */}
@@ -229,7 +254,7 @@ export default function LiveEnginePreview() {
                 <button
                   onClick={() => generateVideo(selectedAd)}
                   disabled={loadingVideoId === selectedAd.id}
-                  className="flex-1 text-xs py-2 rounded bg-purple-100 text-purple-700"
+                  className="flex-1 text-xs py-2 rounded bg-purple-100 text-purple-700 disabled:opacity-50"
                 >
                   {loadingVideoId === selectedAd.id
                     ? "Generating..."

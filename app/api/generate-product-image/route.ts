@@ -663,7 +663,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Upload original image
+
     const bytes = await file.arrayBuffer();
+
     const buffer = Buffer.from(bytes).toString("base64");
 
     const originalUpload = await imagekit.upload({
@@ -774,6 +776,14 @@ ${description}
     if (!generatedImageUrl) {
       throw new Error("Image generation failed");
     }
+    
+    const generatedImage = imageData[0];
+
+    const uploadImageFinalResult = await imagekit.upload({
+      file: `data:image/png;base64,${generatedImage}`,
+      fileName: `generated-${Date.now()}.jpg`,
+      isPublished: true,
+    });
 
     // ==========================
     // UPDATE FIRESTORE

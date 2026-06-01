@@ -31,7 +31,7 @@ export default function LiveEnginePreview() {
       const response = await fetch(imageUrl, {
         mode: "cors",
       });
-      
+
       if (!response.ok) throw new Error("CORS validation failed");
 
       const blob = await response.blob();
@@ -46,9 +46,12 @@ export default function LiveEnginePreview() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.warn("CORS block detected, triggering absolute dynamic tab bypass:", error);
-      
-      // Method 2 (Ultimate Bypass): Agar browser image fetch data access block karega, 
+      console.warn(
+        "CORS block detected, triggering absolute dynamic tab bypass:",
+        error,
+      );
+
+      // Method 2 (Ultimate Bypass): Agar browser image fetch data access block karega,
       // toh yeh image ko direct download format context ke sath new window stream mein open kar dega.
       const win = window.open(imageUrl, "_blank");
       if (!win) {
@@ -170,15 +173,15 @@ export default function LiveEnginePreview() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedAd(ad)}
-                    className="flex-1 text-xs py-1 rounded bg-gray-100"
+                    className="flex-1 text-xs py-1 rounded text-black bg-gray-100"
                   >
                     View
                   </button>
-
+                  
                   <button
                     onClick={() =>
                       handleDownload(
-                        ad.generatedImageUrl || ad.originalImageUrl,
+                        ad.generatedImageUr || ad.originalImageUrl,
                         ad.id,
                       )
                     }

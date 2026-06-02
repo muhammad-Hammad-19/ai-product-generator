@@ -654,18 +654,16 @@ export async function POST(req: NextRequest) {
 
     const docId = Date.now().toString();
 
-    await setDoc(doc(db, "users-ads", docId), {
-      userEmail,
-      status: "pending",
-      size,
-      createdAt: Date.now(),
-      avatar,
-    });
+    // await setDoc(doc(db, "users-ads", docId), {
+    //   userEmail,
+    //   status: "pending",
+    //   size,
+    //   createdAt: Date.now(),
+    //   avatar,
+    // });
 
     // Upload original image
-
     const bytes = await file.arrayBuffer();
-
     const buffer = Buffer.from(bytes).toString("base64");
 
     const originalUpload = await imagekit.upload({
@@ -676,136 +674,128 @@ export async function POST(req: NextRequest) {
 
     // ==========================
     // GPT PROMPT GENERATION
-    // ==========================
-    const basePrompt =
-      avatar?.length > 2
-        ? `${PRODUCT_LOCK_PROMPT}
+//     // ==========================
+//     const basePrompt =
+//       avatar?.length > 2
+//         ? `${PRODUCT_LOCK_PROMPT}
 
-${AVATAR_PROMPT}`
-        : PRODUCT_LOCK_PROMPT;
+// ${AVATAR_PROMPT}`
+//         : PRODUCT_LOCK_PROMPT;
 
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `
-${basePrompt}
+//     const response = await openai.responses.create({
+//       model: "gpt-4.1-mini",
+//       input: [
+//         {
+//           role: "user",
+//           content: [
+//             {
+//               type: "input_text",
+//               text: `
+// ${basePrompt}
 
-Additional user description:
-${description}
-`,
-            },
-            {
-              type: "input_image",
-              image_url: originalUpload.url,
-            },
+// Additional user description:
+// ${description}
+// `,
+//             },
+//             {
+//               type: "input_image",
+//               image_url: originalUpload.url,
+//             },
 
-            ...(avatar?.length > 2
-              ? [
-                  {
-                    type: "input_image",
-                    image_url: avatar,
-                  },
-                ]
-              : []),
-          ],
-        },
-      ],
-    });
+//             ...(avatar?.length > 2
+//               ? [
+//                   {
+//                     type: "input_image",
+//                     image_url: avatar,
+//                   },
+//                 ]
+//               : []),
+//           ],
+//         },
+//       ],
+//     });
 
-    const rawText = response.output_text?.trim() || "";
+//     const rawText = response.output_text?.trim() || "";
 
-    const match = rawText.match(/\{[\s\S]*\}/);
+//     const match = rawText.match(/\{[\s\S]*\}/);
 
-    if (!match) {
-      throw new Error(`GPT JSON not found. Response: ${rawText}`);
-    }
+    // if (!match) {
+    //   throw new Error(`GPT JSON not found. Response: ${rawText}`);
+    // }
 
-    const prompts = JSON.parse(match[0]);
+    // const prompts = JSON.parse(match[0]);
 
-    if (!prompts?.textToImage) {
-      throw new Error("textToImage prompt missing");
-    }
+    // if (!prompts?.textToImage) {
+    //   throw new Error("textToImage prompt missing");
+    // }
 
     // ==========================
     // IMAGE SIZE MAP
     // ==========================
 
-    let apiSize = "1-1";
+    // let apiSize = "1-1";
 
-    if (size.includes("1536x1024")) {
-      apiSize = "16-9";
-    }
+    // if (size.includes("1536x1024")) {
+    //   apiSize = "16-9";
+    // }
 
-    if (size.includes("1024x1536")) {
-      apiSize = "9-16";
-    }
+    // if (size.includes("1024x1536")) {
+    //   apiSize = "9-16";
+    // }
 
     // ==========================
     // FLUX IMAGE GENERATION
     // ==========================
 
-    const imageRes = await axios.post(
-      "https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/quick.php",
-      {
-        prompt: prompts.textToImage,
-        style_id: 4,
-        size: apiSize,
-      },
-      {
-        headers: {
-          "x-rapidapi-key": process.env.RAPID_API_KEY!,
-          "x-rapidapi-host":
-            "ai-text-to-image-generator-flux-free-api.p.rapidapi.com",
-        },
-      },
-    );
+    // const imageRes = await axios.post(
+    //   "https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/quick.php",
+    //   {
+    //     prompt: prompts.textToImage,
+    //     style_id: 4,
+    //     size: apiSize,
+    //   },
+    //   {
+    //     headers: {
+    //       "x-rapidapi-key": process.env.RAPID_API_KEY!,
+    //       "x-rapidapi-host":
+    //         "ai-text-to-image-generator-flux-free-api.p.rapidapi.com",
+    //     },
+    //   },
+    // );
 
-    const data = imageRes.data;
+    // const data = imageRes.data;
 
-    const generatedImageUrl =
-      data?.final_result?.[0]?.origin ||
-      data?.final_result?.[0]?.thumb ||
-      data?.image ||
-      data?.url;
+    // const generatedImageUrl =
+    //   data?.final_result?.[0]?.origin ||
+    //   data?.final_result?.[0]?.thumb ||
+    //   data?.image ||
+    //   data?.url;
 
-    if (!generatedImageUrl) {
-      throw new Error("Image generation failed");
-    }
-    
-    const generatedImage = imageData[0];
-
-    const uploadImageFinalResult = await imagekit.upload({
-      file: `data:image/png;base64,${generatedImage}`,
-      fileName: `generated-${Date.now()}.jpg`,
-      isPublished: true,
-    });
+    // if (!generatedImageUrl) {
+    //   throw new Error("Image generation failed");
+    // }
 
     // ==========================
     // UPDATE FIRESTORE
     // ==========================
 
-    await updateDoc(doc(db, "users-ads", docId), {
-      status: "completed",
-      originalImageUrl: originalUpload.url,
-      generatedImageUrl,
-      imageToVideoPrompt: prompts?.imageToVideo || "",
-      prompts,
-      credits: (userInfo?.credits ?? 0) - 5,
-    });
+    // await updateDoc(doc(db, "users-ads", docId), {
+    //   status: "completed",
+    //   originalImageUrl: originalUpload.url,
+    //   generatedImageUrl,
+    //   imageToVideoPrompt: prompts?.imageToVideo || "",
+    //   prompts,
+    //   credits: (userInfo?.credits ?? 0) - 5,
+    // });
 
     return NextResponse.json({
       success: true,
-      docId,
-      size,
+      // docId,
+      // size,
       originalImageUrl: originalUpload.url,
-      generatedImageUrl,
-      prompts,
-      imageToVideoPrompt: prompts?.imageToVideo,
+      // generatedImageUrl,
+      // prompts,
+      // imageToVideoPrompt: prompts?.imageToVideo,
     });
   } catch (err: any) {
     console.error(err);

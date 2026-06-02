@@ -121,11 +121,13 @@ export default function CampaignFormControls({
         "/api/generate-product-image",
         formData,
       );
+      
+      console.log(data, "data");
 
-      if (data.success) {
-        setUploadSuccess(true);
-        setSelectedImage(data.generatedImageUrl);
-      }
+      // if (data.success) {
+      //   setUploadSuccess(true);
+      //   setSelectedImage(data.generatedImageUrl);
+      // }
     } catch (err: any) {
       alert(err?.response?.data?.error || "Generation failed");
     } finally {

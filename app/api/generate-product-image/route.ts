@@ -635,24 +635,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const q = query(collection(db, "users"), where("email", "==", userEmail));
+    // const q = query(collection(db, "users"), where("email", "==", userEmail));
 
-    const snapshot = await getDocs(q);
+    // const snapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "User not found",
-        },
-        { status: 404 },
-      );
-    }
+    // if (snapshot.empty) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: "User not found",
+    //     },
+    //     { status: 404 },
+    //   );
+    // }
 
-    const userDoc = snapshot.docs[0];
-    const userInfo = userDoc.data();
+    // const userDoc = snapshot.docs[0];
+    // const userInfo = userDoc.data();
 
-    const docId = Date.now().toString();
+    // const docId = Date.now().toString();
 
     // await setDoc(doc(db, "users-ads", docId), {
     //   userEmail,
@@ -663,7 +663,9 @@ export async function POST(req: NextRequest) {
     // });
 
     // Upload original image
+    
     const bytes = await file.arrayBuffer();
+
     const buffer = Buffer.from(bytes).toString("base64");
 
     const originalUpload = await imagekit.upload({
@@ -674,60 +676,61 @@ export async function POST(req: NextRequest) {
 
     // ==========================
     // GPT PROMPT GENERATION
-//     // ==========================
-//     const basePrompt =
-//       avatar?.length > 2
-//         ? `${PRODUCT_LOCK_PROMPT}
+    // ==========================
 
-// ${AVATAR_PROMPT}`
-//         : PRODUCT_LOCK_PROMPT;
+    //     const basePrompt =
+    //       avatar?.length > 2
+    //         ? `${PRODUCT_LOCK_PROMPT}
 
-//     const response = await openai.responses.create({
-//       model: "gpt-4.1-mini",
-//       input: [
-//         {
-//           role: "user",
-//           content: [
-//             {
-//               type: "input_text",
-//               text: `
-// ${basePrompt}
+    // ${AVATAR_PROMPT}`
+    //         : PRODUCT_LOCK_PROMPT;
 
-// Additional user description:
-// ${description}
-// `,
-//             },
-//             {
-//               type: "input_image",
-//               image_url: originalUpload.url,
-//             },
+    //     const response = await openai.responses.create({
+    //       model: "gpt-4.1-mini",
+    //       input: [
+    //         {
+    //           role: "user",
+    //           content: [
+    //             {
+    //               type: "input_text",
+    //               text: `
+    // ${basePrompt}
 
-//             ...(avatar?.length > 2
-//               ? [
-//                   {
-//                     type: "input_image",
-//                     image_url: avatar,
-//                   },
-//                 ]
-//               : []),
-//           ],
-//         },
-//       ],
-//     });
+    // Additional user description:
+    // ${description}
+    // `,
+    //             },
+    //             {
+    //               type: "input_image",
+    //               image_url: originalUpload.url,
+    //             },
 
-//     const rawText = response.output_text?.trim() || "";
+    //             ...(avatar?.length > 2
+    //               ? [
+    //                   {
+    //                     type: "input_image",
+    //                     image_url: avatar,
+    //                   },
+    //                 ]
+    //               : []),
+    //           ],
+    //         },
+    //       ],
+    //     });
 
-//     const match = rawText.match(/\{[\s\S]*\}/);
+    //     const rawText = response.output_text?.trim() || "";
 
-    // if (!match) {
-    //   throw new Error(`GPT JSON not found. Response: ${rawText}`);
-    // }
+    //     const match = rawText.match(/\{[\s\S]*\}/);
 
-    // const prompts = JSON.parse(match[0]);
+    //     if (!match) {
+    //       throw new Error(`GPT JSON not found. Response: ${rawText}`);
+    //     }
 
-    // if (!prompts?.textToImage) {
-    //   throw new Error("textToImage prompt missing");
-    // }
+    //     const prompts = JSON.parse(match[0]);
+
+    //     if (!prompts?.textToImage) {
+    //       throw new Error("textToImage prompt missing");
+    //     }
 
     // ==========================
     // IMAGE SIZE MAP

@@ -1,35 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  PlusCircle,
-  Megaphone,
-  Eye,
-  Download,
-  Sparkles,
-  Loader2,
-  X,
-} from "lucide-react";
+import { PlusCircle, Megaphone, Eye, Sparkles, Loader2, X } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useAuthContext } from "@/app/provider";
 import { db } from "@/configs/firebaseConfig";
-
-const handleDownload = async (imageUrl: string, title: string) => {
-  try {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${title}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    alert("Download failed");
-  }
-};
 
 const UserAdsList = () => {
   const { user } = useAuthContext();
@@ -151,19 +126,6 @@ const UserAdsList = () => {
                     View
                   </button>
 
-                  <button
-                    onClick={() =>
-                      handleDownload(
-                        ad.generatedImageUrl || ad.originalImageUrl,
-                        ad.id,
-                      )
-                    }
-                    className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-blue-600 text-white text-[10px] font-medium hover:bg-blue-700 shadow-sm transition-all"
-                  >
-                    <Download className="w-3 h-3" />
-                    Save
-                  </button>
-
                   <button className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 text-[10px] font-medium border border-violet-100 dark:border-violet-900/40 hover:bg-violet-100 transition-all">
                     <Sparkles className="w-3 h-3" />
                     Animate
@@ -204,19 +166,6 @@ const UserAdsList = () => {
               </p>
 
               <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    handleDownload(
-                      selectedAd.generatedImageUrl || selectedAd.originalImageUrl,
-                      selectedAd.id,
-                    )
-                  }
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Download
-                </button>
-
                 <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400 text-xs font-bold border border-violet-200 dark:border-violet-900 hover:bg-violet-100 transition-all">
                   <Sparkles className="w-3.5 h-3.5" />
                   Animate

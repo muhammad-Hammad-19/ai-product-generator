@@ -8,7 +8,6 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 interface AuthContextType {
   user: User | null;
 }
-
 function Provider({
   children,
   ...props

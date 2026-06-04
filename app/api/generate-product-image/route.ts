@@ -589,8 +589,9 @@ Ensure the product is sharp and in focus, with motion and energy conveyed throug
 Return ONLY valid JSON in this format:
 {
   "textToImage":"",
-  "imageToVideo":""
+  "imageToVideo":"",
 }
+
 `;
 
 const AVATAR_PROMPT = `
@@ -601,7 +602,7 @@ The avatar should look friendly and engaging, presenting the product seamlessly 
 Return ONLY valid JSON in this format:
 {
   "textToImage":"",
-  "imageToVideo":""
+  "imageToVideo":"",
 }
 `;
 
@@ -663,7 +664,7 @@ export async function POST(req: NextRequest) {
     // });
 
     // Upload original image
-    
+
     const bytes = await file.arrayBuffer();
 
     const buffer = Buffer.from(bytes).toString("base64");
@@ -678,105 +679,110 @@ export async function POST(req: NextRequest) {
     // GPT PROMPT GENERATION
     // ==========================
 
-    //     const basePrompt =
-    //       avatar?.length > 2
-    //         ? `${PRODUCT_LOCK_PROMPT}
+    const basePrompt =
+      avatar?.length > 2
+        ? `${PRODUCT_LOCK_PROMPT}
 
-    // ${AVATAR_PROMPT}`
-    //         : PRODUCT_LOCK_PROMPT;
+    ${AVATAR_PROMPT}`
+        : PRODUCT_LOCK_PROMPT;
 
-    //     const response = await openai.responses.create({
-    //       model: "gpt-4.1-mini",
-    //       input: [
-    //         {
-    //           role: "user",
-    //           content: [
-    //             {
-    //               type: "input_text",
-    //               text: `
-    // ${basePrompt}
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `
+    ${basePrompt}
 
-    // Additional user description:
-    // ${description}
-    // `,
-    //             },
-    //             {
-    //               type: "input_image",
-    //               image_url: originalUpload.url,
-    //             },
+    Additional user description:
+    ${description}
+    `,
+            },
+            {
+              type: "input_image",
+              image_url: originalUpload.url,
+            },
 
-    //             ...(avatar?.length > 2
-    //               ? [
-    //                   {
-    //                     type: "input_image",
-    //                     image_url: avatar,
-    //                   },
-    //                 ]
-    //               : []),
-    //           ],
-    //         },
-    //       ],
-    //     });
+            ...(avatar?.length > 2
+              ? [
+                  {
+                    type: "input_image",
+                    image_url: avatar,
+                  },
+                ]
+              : []),
+          ],
+        },
+      ],
+    });
 
-    //     const rawText = response.output_text?.trim() || "";
+    // const res = await openai.responses.create({
+    //   model: "gpt-4.1-mini",
+    //   input: "give me text for hammad name , just 1 line",
+    // });
 
-    //     const match = rawText.match(/\{[\s\S]*\}/);
+    const rawText = response.output_text?.trim() || "";
 
-    //     if (!match) {
-    //       throw new Error(`GPT JSON not found. Response: ${rawText}`);
-    //     }
+    const match = rawText.match(/\{[\s\S]*\}/);
 
-    //     const prompts = JSON.parse(match[0]);
+    if (!match) {
+      throw new Error(`GPT JSON not found. Response: ${rawText}`);
+    }
 
-    //     if (!prompts?.textToImage) {
-    //       throw new Error("textToImage prompt missing");
-    //     }
+    const prompts = JSON.parse(match[0]);
+
+    if (!prompts?.textToImage) {
+      throw new Error("textToImage prompt missing");
+    }
 
     // ==========================
     // IMAGE SIZE MAP
     // ==========================
 
-    // let apiSize = "1-1";
+    let apiSize = "1-1";
 
-    // if (size.includes("1536x1024")) {
-    //   apiSize = "16-9";
-    // }
+    if (size.includes("1536x1024")) {
+      apiSize = "16-9";
+    }
 
-    // if (size.includes("1024x1536")) {
-    //   apiSize = "9-16";
-    // }
+    if (size.includes("1024x1536")) {
+      apiSize = "9-16";
+    }
 
     // ==========================
     // FLUX IMAGE GENERATION
     // ==========================
 
-    // const imageRes = await axios.post(
-    //   "https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/quick.php",
-    //   {
-    //     prompt: prompts.textToImage,
-    //     style_id: 4,
-    //     size: apiSize,
-    //   },
-    //   {
-    //     headers: {
-    //       "x-rapidapi-key": process.env.RAPID_API_KEY!,
-    //       "x-rapidapi-host":
-    //         "ai-text-to-image-generator-flux-free-api.p.rapidapi.com",
-    //     },
-    //   },
-    // );
+    const imageRes = await axios.post(
+      "https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/quick.php",
+      {
+        prompt: prompts.textToImage,
+        style_id: 4,
+        size: apiSize,
+      },
+      {
+        headers: {
+          "x-rapidapi-key": process.env.RAPID_API_KEY!,
+          "x-rapidapi-host":
+            "ai-text-to-image-generator-flux-free-api.p.rapidapi.com",
+        },
+      },
+    );
 
-    // const data = imageRes.data;
+    const data = imageRes.data;
 
-    // const generatedImageUrl =
-    //   data?.final_result?.[0]?.origin ||
-    //   data?.final_result?.[0]?.thumb ||
-    //   data?.image ||
-    //   data?.url;
+    const generatedImageUrl =
+      data?.final_result?.[0]?.origin ||
+      data?.final_result?.[0]?.thumb ||
+      data?.image ||
+      data?.url;
 
-    // if (!generatedImageUrl) {
-    //   throw new Error("Image generation failed");
-    // }
+    if (!generatedImageUrl) {
+      throw new Error("Image generation failed");
+    }
 
     // ==========================
     // UPDATE FIRESTORE
@@ -795,9 +801,10 @@ export async function POST(req: NextRequest) {
       success: true,
       // docId,
       // size,
+      // res,
       originalImageUrl: originalUpload.url,
-      // generatedImageUrl,
-      // prompts,
+      generatedImageUrl,
+      prompts,
       // imageToVideoPrompt: prompts?.imageToVideo,
     });
   } catch (err: any) {

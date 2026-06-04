@@ -229,27 +229,28 @@ import axios from "axios";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { imageUrl, prompt } = body;
-    console.log(imageUrl, "imageUrl", prompt, "Promt");
+    // const body = await req.json();
+    // const { imageUrl, prompt } = body;
+    // console.log(imageUrl, "imageUrl", prompt, "Promt");
 
-    if (!imageUrl || !prompt) {
-      return NextResponse.json(
-        { success: false, error: "Missing imageUrl or prompt" },
-        { status: 400 },
-      );
-    }
-  
-    
+    // if (!imageUrl || !prompt) {
+    //   return NextResponse.json(
+    //     { success: false, error: "Missing imageUrl or prompt" },
+    //     { status: 400 },
+    //   );
+    // }
+
     const response = await axios.post(
       "https://udayogra-images-to-video-v1.p.rapidapi.com/am",
       {
-        image_url: imageUrl, // 👈 CHANGE THIS
-        prompt: prompt,
+        image_url:
+          "https://pub-static.aiease.ai/cf/2026/06/04/origin/aiease_art_v1_9a52a8a3-1081-4267-ac87-020d464069dd_1.webp",
+        prompt:
+          "craete best viedo for buy this product , and just video length is 2 second videp should not big ",
       },
       {
         headers: {
-          "x-rapidapi-key": process.env.RAPID_API_KEY || "",
+          "x-rapidapi-key": process.env.RAPID_API_KEY,
           "x-rapidapi-host": "udayogra-images-to-video-v1.p.rapidapi.com",
           "Content-Type": "application/json",
         },
@@ -262,8 +263,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: response,
-      imageUrl,
-      prompt,
+      // imageUrl,
+      // prompt,
     });
   } catch (err: any) {
     console.error("API ERROR:", err?.response?.data || err.message);

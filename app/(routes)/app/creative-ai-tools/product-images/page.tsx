@@ -14,7 +14,7 @@ return (
   <div className="w-full min-h-screen bg-neutral-50 dark:bg-zinc-950 p-4">
     {/* Mobile par flex-col (upar-neeche) aur lg (badi screen) par flex-row (left-right) */}
     <div className="w-full md:w-[90%] mx-auto flex flex-col lg:flex-row gap-6 items-start">
-      
+
       {/* Form Section: Mobile par full width, badi screen par half width */}
       <div className="w-full lg:w-1/2">
         <CampaignFormControls
@@ -30,7 +30,7 @@ return (
           enableAvater={enableAvater}
         />
       </div>
-      
+
       {/* Preview Section: Mobile par full width, badi screen par half width + sticky */}
       <div className="w-full lg:w-1/2 lg:sticky lg:top-4">
         <LiveEnginePreview />

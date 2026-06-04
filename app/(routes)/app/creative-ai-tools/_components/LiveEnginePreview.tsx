@@ -51,10 +51,10 @@ export default function LiveEnginePreview() {
     try {
       const imageUrl = ad?.generatedImageUrl || ad?.originalImageUrl;
 
-      if (!imageUrl) {
-        alert("No image found");
-        return;
-      }
+      // if (!imageUrl) {
+      //   alert("No image found");
+      //   return;
+      // }
 
       // ✅ FIX: Button par loading status dikhane ke liye state set ki
       setLoadingVideoId(ad.id);
@@ -70,6 +70,7 @@ export default function LiveEnginePreview() {
           withCredentials: true,
         },
       );
+      
       console.log(res.data);
 
       if (res.data.success) {

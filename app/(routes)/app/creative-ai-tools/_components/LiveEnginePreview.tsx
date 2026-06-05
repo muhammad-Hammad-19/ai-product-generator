@@ -46,43 +46,51 @@ export default function LiveEnginePreview() {
     }
   };
 
-  // ✅ FIXED VIDEO GENERATION LOGIC
-  const generateVideo = async (ad: any) => {
+  const generateVideo = async (ad: any) => {    
     try {
+      
       const imageUrl = ad?.generatedImageUrl || ad?.originalImageUrl;
 
-      // if (!imageUrl) {
-      //   alert("No image found");
-      //   return;
-      // }
+      if (!imageUrl) {
+        alert("No image found");
+        return;
+      }
 
-      // ✅ FIX: Button par loading status dikhane ke liye state set ki
+      // 🔥 loading state ON
       setLoadingVideoId(ad.id);
 
       const res = await axios.post(
         "/api/generate-product-video",
         {
           imageUrl,
+          docId: ad?.id,
           prompt:
-            "A cinematic luxury product advertisement with slow rotation, dramatic lighting, liquid splash effects, ultra realistic studio look.",
+            "A cinematic luxury product advertisement with slow rotation, dramatic lighting, ultra realistic studio look.",
         },
         {
           withCredentials: true,
         },
       );
-      
-      console.log(res.data);
+
+      console.log("VIDEO RESPONSE:", res.data);
 
       if (res.data.success) {
-        alert("Video request sent");
-        console.log(res.data.data);
+        alert("Video generation started / completed");
+
+        // if video URL returned
+        if (res.data.videoUrl) {
+          console.log("VIDEO URL:", res.data.videoUrl);
+        } else {
+          console.log("Task response:", res.data.data);
+        }
       } else {
-        alert(res.data.error);
+        alert(res.data.error?.message || "Video generation failed");
       }
     } catch (err: any) {
+      console.error("ERROR:", err.message);
       alert(err.message);
     } finally {
-      // ✅ FIX: Generation khatam hone ke baad loading status off
+      // 🔥 loading OFF
       setLoadingVideoId(null);
     }
   };

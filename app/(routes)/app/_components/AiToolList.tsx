@@ -9,17 +9,17 @@ const AiToolList = () => {
     {
       id: 1,
       title: "AI Product Banner Generator",
-      desc: "Create high-converting, professional product banners for your brand using advanced AI instantly.",
+      desc: "Generate professional, high-converting product banners instantly using advanced AI.",
       type: "Photo Tool",
       image:
         "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500&auto=format&fit=crop",
       badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-      url: "/app/creative-ai-tools/product-images", // Route pointing straight to your product workspace folder
+      url: "/app/creative-ai-tools/product-images",
     },
     {
       id: 2,
       title: "Cinematic Product Video Reel",
-      desc: "Transform static product descriptions into highly engaging 4K video promos and social media motion reels.",
+      desc: "Convert your static product descriptions into engaging social media video reels.",
       type: "Video Tool",
       image:
         "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=500&auto=format&fit=crop",
@@ -28,8 +28,8 @@ const AiToolList = () => {
     },
     {
       id: 3,
-      title: "Smart Background Remover",
-      desc: "Isolate your products with absolute pixel perfection. Replace busy backgrounds with studio drops.",
+      title: "AI Product Profile & Avatar",
+      desc: "Create premium studio avatars and professional product display profiles instantly.",
       type: "Photo Tool",
       image:
         "https://images.unsplash.com/photo-1600132806370-bf17e65e942f?q=80&w=500&auto=format&fit=crop",
@@ -37,7 +37,6 @@ const AiToolList = () => {
       url: "/app/creative-ai-tools/product-avatar",
     },
   ];
-
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-12">
       {/* Main Section Heading */}

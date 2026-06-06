@@ -9,12 +9,14 @@ import { db } from "@/configs/firebaseConfig";
 const UserAdsList = () => {
   const { user } = useAuthContext();
   const [adsList, setAdsList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedAd, setSelectedAd] = useState<any | null>(null);
 
   useEffect(() => {
     if (user?.email) {
       fetchAds();
+    } else if (user === null) {
+      setLoading(false);
     }
   }, [user]);
 
@@ -47,13 +49,12 @@ const UserAdsList = () => {
         </p>
       </div>
 
-      {/* Loading */}
+      {/* Logic Handle Control */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[350px]">
           <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
         </div>
       ) : adsList.length === 0 ? (
-        /* Empty State */
         <div className="flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl p-10 bg-neutral-50/50 dark:bg-neutral-900/30 text-center min-h-[350px]">
           <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-4 shadow-sm">
             <Megaphone className="w-8 h-8" />
@@ -92,7 +93,6 @@ const UserAdsList = () => {
                 <div className="absolute top-2 left-2 bg-neutral-900/80 backdrop-blur-md text-white text-[9px] font-medium px-2 py-0.5 rounded-md border border-white/10">
                   {ad.size ?? "1024x1024"}
                 </div>
-                {/* Status badge */}
                 {ad.status && (
                   <div
                     className={`absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full ${
@@ -108,13 +108,8 @@ const UserAdsList = () => {
 
               {/* Info + Actions */}
               <div className="p-3 space-y-3">
-                <p
-                  className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate"
-                  title={ad.prompts?.textToImage}
-                >
-                  {ad.prompts?.textToImage
-                    ? `${ad.prompts.textToImage.slice(0, 40)}...`
-                    : "AI Generated Ad"}
+                <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                  {ad.prompts?.textToImage || "AI Generated Ad"}
                 </p>
 
                 <div className="flex gap-1.5">
@@ -137,38 +132,50 @@ const UserAdsList = () => {
         </div>
       )}
 
-      {/* View Modal */}
+      {/* VIEW MODAL (FIXED UI & RESPONSIVE) */}
       {selectedAd && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setSelectedAd(null)}
         >
           <div
-            className="relative bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full"
+            className="relative bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl max-w-sm w-full border border-neutral-200 dark:border-zinc-800 flex flex-col my-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button top corner wrapper */}
             <button
               onClick={() => setSelectedAd(null)}
-              className="absolute top-3 right-3 z-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-all"
+              className="absolute top-3 right-3 z-20 bg-white/80 dark:bg-zinc-800/80 hover:scale-105 text-neutral-800 dark:text-zinc-200 p-1.5 rounded-full transition-all border border-neutral-200 dark:border-neutral-700 backdrop-blur-sm"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <img
-              src={selectedAd.generatedImageUrl || selectedAd.originalImageUrl}
-              alt="Full View"
-              className="w-full object-cover"
-            />
+            {/* Premium Aspect Balanced Preview */}
+            <div className="relative w-full aspect-square bg-zinc-950 flex items-center justify-center overflow-hidden border-b border-neutral-100 dark:border-zinc-800">
+              <img
+                src={
+                  selectedAd.generatedImageUrl || selectedAd.originalImageUrl
+                }
+                alt="Full View"
+                className="w-full h-full object-cover"
+              />
+            </div>
 
-            <div className="p-4 space-y-3">
-              <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-                {selectedAd.prompts?.textToImage ?? "AI Generated Ad"}
-              </p>
+            {/* Bottom Panel Text + Actions */}
+            <div className="p-5 space-y-4 bg-white dark:bg-zinc-900">
+              <div className="space-y-1">
+                <h4 className="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
+                  Campaign Prompt
+                </h4>
+                <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 leading-relaxed max-h-[100px] overflow-y-auto bg-neutral-50 dark:bg-zinc-950 p-3 rounded-xl italic">
+                  "{selectedAd.prompts?.textToImage ?? "AI Generated Ad"}"
+                </p>
+              </div>
 
-              <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400 text-xs font-bold border border-violet-200 dark:border-violet-900 hover:bg-violet-100 transition-all">
+              <div className="flex gap-2 pt-1">
+                <button className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md shadow-purple-600/10 transition-all active:scale-[0.98]">
                   <Sparkles className="w-3.5 h-3.5" />
-                  Animate
+                  Animate Campaign
                 </button>
               </div>
             </div>

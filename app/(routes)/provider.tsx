@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { useAuthContext } from "../provider";
 import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import axios from "axios";
 import AppHeader from "../_components/AppHeader";
 import { AppSidebar } from "../_components/AppSidebar";
 
@@ -17,9 +16,9 @@ function DashboardProvider({
 
   useEffect(() => {
     if (!user?.user && user.user) return router.replace("/");
-    
-    user?.user;
-  }, [user]);
+
+    user?.user
+  }, [user.user]);
 
   // const checkUser = async () => {
   //   const result = await axios.post("/api/user", {

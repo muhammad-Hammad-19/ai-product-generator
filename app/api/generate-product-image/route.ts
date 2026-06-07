@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import { imagekit } from "@/lib/imageKit";
 import { openai } from "@/lib/openai";
+
 import {
   collection,
   doc,
@@ -12,29 +13,35 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+
 import { db } from "@/configs/firebaseConfig";
 
 const PRODUCT_LOCK_PROMPT = `
 Create a vibrant product showcase image featuring the uploaded product image in the center, surrounded by dynamic splashes of liquid or relevant material that complements it.
+
 Use a clean, colorful background to make the product stand out.
+
 Include subtle elements, ingredients, or theme-related objects floating around to add context and visual interest.
+
 Ensure the product is sharp and in focus, with motion and energy conveyed through the splashes.
 
 Return ONLY valid JSON in this format:
 {
   "textToImage":"",
-  "imageToVideo":""
+  "imageToVideo":"",
 }
+
 `;
 
 const AVATAR_PROMPT = `
 Place this avatar model wearing professional or casual outfit, standing or sitting next to the product in a realistic and natural way.
+
 The avatar should look friendly and engaging, presenting the product seamlessly for a social media advertisement.
 
 Return ONLY valid JSON in this format:
 {
   "textToImage":"",
-  "imageToVideo":""
+  "imageToVideo":"",
 }
 `;
 
@@ -50,30 +57,41 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
       return NextResponse.json(
-        { success: false, error: "No file uploaded" },
+        {
+          success: false,
+          error: "No file uploaded",
+        },
         { status: 400 },
       );
     }
 
     if (!userEmail) {
       return NextResponse.json(
-        { success: false, error: "User email missing" },
+        {
+          success: false,
+          error: "User email missing",
+        },
         { status: 401 },
       );
     }
 
     const q = query(collection(db, "users"), where("email", "==", userEmail));
+
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
       return NextResponse.json(
-        { success: false, error: "User not found" },
+        {
+          success: false,
+          error: "User not found",
+        },
         { status: 404 },
       );
     }
 
     const userDoc = snapshot.docs[0];
     const userInfo = userDoc.data();
+
     const docId = Date.now().toString();
 
     await setDoc(doc(db, "users-ads", docId), {
@@ -85,7 +103,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Upload original image
+
     const bytes = await file.arrayBuffer();
+
     const buffer = Buffer.from(bytes).toString("base64");
 
     const originalUpload = await imagekit.upload({
@@ -94,10 +114,15 @@ export async function POST(req: NextRequest) {
       folder: "/campaigns",
     });
 
-    // GPT Prompt Setup
+    // ==========================
+    // GPT PROMPT GENERATION
+    // ==========================
+
     const basePrompt =
       avatar?.length > 2
-        ? `${PRODUCT_LOCK_PROMPT}\n\n${AVATAR_PROMPT}`
+        ? `${PRODUCT_LOCK_PROMPT}
+
+    ${AVATAR_PROMPT}`
         : PRODUCT_LOCK_PROMPT;
 
     const response = await openai.responses.create({
@@ -108,14 +133,25 @@ export async function POST(req: NextRequest) {
           content: [
             {
               type: "input_text",
-              text: `${basePrompt}\n\nAdditional user description:\n${description}`,
+              text: `
+    ${basePrompt}
+
+    Additional user description:
+    ${description}
+    `,
             },
             {
               type: "input_image",
               image_url: originalUpload.url,
             },
+
             ...(avatar?.length > 2
-              ? [{ type: "input_image", image_url: avatar }]
+              ? [
+                  {
+                    type: "input_image",
+                    image_url: avatar,
+                  },
+                ]
               : []),
           ],
         },
@@ -123,6 +159,7 @@ export async function POST(req: NextRequest) {
     });
 
     const rawText = response.output_text?.trim() || "";
+
     const match = rawText.match(/\{[\s\S]*\}/);
 
     if (!match) {
@@ -135,18 +172,24 @@ export async function POST(req: NextRequest) {
       throw new Error("textToImage prompt missing");
     }
 
-    // ==========================================
-    // FIXED: EXACT SIZE MAPPING FOR FLUX API
-    // ==========================================
-    const sizeMap: Record<string, string> = {
-      "1024x1024": "1-1",
-      "1536x1024": "16-9",
-      "1024x1536": "9-16",
-    };
+    // ==========================
+    // IMAGE SIZE MAP
+    // ==========================
 
-    const apiSize = sizeMap[size] || "1-1";
+    let apiSize = "1-1";
 
-    // Flux API Request
+    if (size.includes("1536x1024")) {
+      apiSize = "16-9";
+    }
+
+    if (size.includes("1024x1536")) {
+      apiSize = "9-16";
+    }
+
+    // ==========================
+    // FLUX IMAGE GENERATION
+    // ==========================
+
     const imageRes = await axios.post(
       "https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/quick.php",
       {
@@ -154,6 +197,7 @@ export async function POST(req: NextRequest) {
         style_id: 4,
         size: apiSize,
       },
+      
       {
         headers: {
           "x-rapidapi-key": process.env.RAPID_API_KEY!,
@@ -164,6 +208,7 @@ export async function POST(req: NextRequest) {
     );
 
     const data = imageRes.data;
+
     const generatedImageUrl =
       data?.final_result?.[0]?.origin ||
       data?.final_result?.[0]?.thumb ||
@@ -174,7 +219,10 @@ export async function POST(req: NextRequest) {
       throw new Error("Image generation failed");
     }
 
-    // Update Firestore with completed state
+    // ==========================
+    // UPDATE FIRESTORE
+    // ==========================
+
     await updateDoc(doc(db, "users-ads", docId), {
       status: "completed",
       originalImageUrl: originalUpload.url,
@@ -188,6 +236,7 @@ export async function POST(req: NextRequest) {
       success: true,
       docId,
       size,
+
       originalImageUrl: originalUpload.url,
       generatedImageUrl,
       prompts,
@@ -195,9 +244,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error(err);
+
     return NextResponse.json(
-      { success: false, error: err?.message || "Server error" },
-      { status: 500 },
+      {
+        success: false,
+        error: err?.message || "Server error",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }

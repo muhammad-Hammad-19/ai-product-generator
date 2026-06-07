@@ -65,32 +65,6 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative overflow-hidden before:absolute before:top-0 before:start-1/2 before:bg-[url('https://preline.co/assets/svg/examples/polygon-bg-element.svg')] dark:before:bg-[url('https://preline.co/assets/svg/examples-dark/polygon-bg-element.svg')] before:bg-no-repeat before:bg-top before:bg-cover before:size-full before:-z-[1] before:transform before:-translate-x-1/2">
         <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-          {/* Announcement Badge */}
-          <div className="flex justify-center mb-6">
-            <a
-              className="inline-flex items-center gap-x-2 bg-white/90 border border-gray-200 text-xs font-medium text-gray-800 p-1.5 ps-3 pe-1.5 rounded-full shadow-sm transition hover:border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:hover:border-neutral-600 dark:text-neutral-200"
-              href="https://tubeguruji.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              TUBEGURUJI Membership - Join Now
-              <span className="py-1 px-2 inline-flex justify-center items-center gap-x-2 rounded-full bg-blue-50 font-semibold text-xs text-blue-600 dark:bg-neutral-700 dark:text-neutral-400">
-                <svg
-                  className="flex-shrink-0 size-3.5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </span>
-            </a>
-          </div>
-
           {/* Main Title */}
           <div className="max-w-3xl mx-auto">
             <h1 className="block font-black text-gray-900 text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-tight dark:text-neutral-100">

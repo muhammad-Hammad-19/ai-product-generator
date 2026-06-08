@@ -13,9 +13,9 @@ function AddHomePage() {
   useEffect(() => {
     // FIX: Agar auth loading khatam ho chuki hai aur user ya uska email nahi mila, toh login par redirect karo
     if (!user || !user.email) {
-      router.push("/login");
+      router.push("/");
     }
-  }, [user, router]);
+  }, [user]);
 
   // Premium Loading State: Jab tak authentication state clear nahi hoti, tab tak loader dikhao}
 

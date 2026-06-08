@@ -18,6 +18,7 @@ import {
   Settings,
   Wallet2,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -124,7 +125,8 @@ export function AppSidebar() {
       {/* Sidebar Bottom Footer Profile/Auth Section */}
       <SidebarFooter className="p-4 border-t border-neutral-100 dark:border-neutral-800 gap-4">
         <div className="w-full">
-          {user ? (
+          {user?.email ? (
+            /* 1. USER LOGGED IN HAI - REAL DATA SHOW HOGA */
             <div className="flex items-center justify-between w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2.5 shadow-sm transition-all hover:border-neutral-300 dark:hover:border-neutral-700">
               <div className="flex flex-col text-left truncate min-w-0 pr-2">
                 <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 leading-tight truncate">
@@ -141,12 +143,16 @@ export function AppSidebar() {
               </div>
             </div>
           ) : (
-            <Button
-              onClick={() => router.push("/login")}
-              className="w-full font-semibold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-transform active:scale-[0.98]"
-            >
-              Signup
-            </Button>
+            /* 2. REFRESH PAR YA VISITOR KE LIYE - PREMIUM ANIME PULSE SKELETON DIKHEGA WITH LOADER */
+            <div className="flex items-center justify-between w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2.5 shadow-sm animate-pulse">
+              <div className="flex flex-col space-y-2 flex-1 pr-3">
+                <div className="h-3 w-2/3 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
+                <div className="h-2 w-1/3 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
+              </div>
+              <div className="flex-shrink-0 text-neutral-400 dark:text-neutral-600">
+                <Loader2 className="w-5 h-5 animate-spin" />
+              </div>
+            </div>
           )}
         </div>
 

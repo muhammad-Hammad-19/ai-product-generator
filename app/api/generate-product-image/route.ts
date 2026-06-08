@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
 
     ${AVATAR_PROMPT}`
         : PRODUCT_LOCK_PROMPT;
-
+        
     const response = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [

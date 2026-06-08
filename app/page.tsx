@@ -1,19 +1,13 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
 import Authentication from "./_components/Authentication";
-import { Button } from "@/components/ui/button";
-import { auth } from "@/configs/firebaseConfig";
 import ProfileAvatar from "./_components/ProfileAvatar";
 import { useAuthContext } from "./provider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function Home() {
   const context = useAuthContext();
   const user = context?.user;
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-900">

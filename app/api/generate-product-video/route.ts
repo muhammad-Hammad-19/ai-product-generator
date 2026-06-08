@@ -9,8 +9,9 @@ const ai = new GoogleGenAI({
 
 export async function POST(req: NextRequest) {
   try {
-    
     const { imageUrl, prompt, docId } = await req.json();
+    const videoUrl =
+      "https://pixabay.com/videos/download/video-272382_medium.mp4";
 
     if (!imageUrl || !prompt || !docId) {
       return NextResponse.json(
@@ -25,49 +26,48 @@ export async function POST(req: NextRequest) {
     await updateDoc(doc(db, "users-ads", docId), {
       imageToVideoStatus: "pending",
     });
+    
+    // const res = await fetch(imageUrl);
+    // const buffer = await res.arrayBuffer();
+    // const base64Image = Buffer.from(buffer).toString("base64");
 
+    // let operation = await ai.models.generateVideos({
+    //   model: "veo-3.1-generate-preview",
+    //   prompt,
 
-    const res = await fetch(imageUrl);
-    const buffer = await res.arrayBuffer();
-    const base64Image = Buffer.from(buffer).toString("base64");
+    //   image: {
+    //     imageBytes: base64Image, // ✅ FIXED
+    //     mimeType: "image/jpeg",
+    //   },
 
-    let operation = await ai.models.generateVideos({
-      model: "veo-3.1-generate-preview",
-      prompt,
+    //   config: {
+    //     aspectRatio: "16:9",
+    //   },
+    // });
 
-      image: {
-        imageBytes: base64Image, // ✅ FIXED
-        mimeType: "image/jpeg",
-      },
+    // // 🔄 polling
+    // while (!operation.done) {
+    //   await new Promise((r) => setTimeout(r, 10000));
 
-      config: {
-        aspectRatio: "16:9",
-      },
-    });
+    //   operation = await ai.operations.getVideosOperation({
+    //     operation,
+    //   });
+    // }
 
-    // 🔄 polling
-    while (!operation.done) {
-      await new Promise((r) => setTimeout(r, 10000));
+    // const video = operation?.response?.generatedVideos?.[0];
 
-      operation = await ai.operations.getVideosOperation({
-        operation,
-      });
-    }
+    // if (!video?.video) {
+    //   await updateDoc(doc(db, "users-ads", docId), {
+    //     imageToVideoStatus: "failed",
+    //   });
 
-    const video = operation?.response?.generatedVideos?.[0];
+    //   return NextResponse.json({
+    //     success: false,
+    //     error: "No video generated",
+    //   });
+    // }
 
-    if (!video?.video) {
-      await updateDoc(doc(db, "users-ads", docId), {
-        imageToVideoStatus: "failed",
-      });
-
-      return NextResponse.json({
-        success: false,
-        error: "No video generated",
-      });
-    }
-
-    const videoUrl = video.video;
+    // const videoUrl = video.video;
 
     await updateDoc(doc(db, "users-ads", docId), {
       imageToVideoStatus: "completed",

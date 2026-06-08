@@ -18,9 +18,10 @@ function ProfileAvatar() {
   const onLogout = async () => {
     try {
       await signOut(auth);
-      // 🔥 redirect after logout
+
       localStorage.removeItem("user");
-      router.replace("/");
+      
+      router.push("/");
     } catch (error) {
       console.error("Logout error:", error);
     }

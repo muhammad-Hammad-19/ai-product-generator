@@ -23,7 +23,6 @@ interface FormProps {
   uploadSuccess: boolean;
   setUploadSuccess: (val: boolean) => void;
   title: string;
-  enableAvater?: boolean;
 }
 
 const IMAGE_SIZES = [
@@ -63,7 +62,7 @@ export default function CampaignFormControls({
   uploadSuccess,
   setUploadSuccess,
   title,
-  enableAvater = false,
+  enableAvater = true,
 }: FormProps) {
   const [localFile, setLocalFile] = useState<File | null>(null);
   const [selectedSize, setSelectedSize] = useState("1024x1024");
@@ -73,6 +72,7 @@ export default function CampaignFormControls({
   );
 
   const { user } = useAuthContext();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,6 +246,7 @@ export default function CampaignFormControls({
       </div>
 
       {/* SECTION: AVATAR */}
+
       {enableAvater && (
         <div className="space-y-3 pt-1">
           <div className="flex justify-between items-center">

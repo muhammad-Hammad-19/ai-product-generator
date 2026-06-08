@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import LiveEnginePreview from "../_components/LiveEnginePreview";
 import CampaignFormControls from "../_components/CampaignFormControls";
 
-const ProductUpload = ({ title, enableAvater }) => {
+const ProductUpload = ({ title }) => {
   const [description, setDescription] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -27,7 +27,7 @@ return (
           uploadSuccess={uploadSuccess}
           setUploadSuccess={setUploadSuccess}
           title={title}
-          enableAvater={enableAvater}
+
         />
       </div>
 

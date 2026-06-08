@@ -1,5 +1,5 @@
 "use client";
-import Authentication from "./_components/Authentication";
+
 import ProfileAvatar from "./_components/ProfileAvatar";
 import { useAuthContext } from "./provider";
 import { useRouter } from "next/navigation";
@@ -30,25 +30,26 @@ export default function Home() {
           {/* Right Side Action */}
           <div className="flex items-center gap-x-4">
             {!user?.email ? (
-              <Authentication>
-                <button className="inline-flex items-center gap-x-2 font-medium text-gray-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-500 transition-colors py-2 px-3 sm:px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700/50">
-                  <svg
-                    className="flex-shrink-0 size-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                  Get Started
-                </button>
-              </Authentication>
+              <button
+                onClick={() => router.push("/login")}
+                className="inline-flex items-center gap-x-2 font-medium text-gray-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-500 transition-colors py-2 px-3 sm:px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700/50"
+              >
+                <svg
+                  className="flex-shrink-0 size-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                Get Started
+              </button>
             ) : (
               <ProfileAvatar />
             )}
@@ -80,23 +81,24 @@ export default function Home() {
           {/* CTA Button Conditional Render */}
           <div className="mt-10 flex justify-center">
             {!user?.email ? (
-              <Authentication>
-                <button className="inline-flex justify-center items-center gap-x-3 text-center bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 py-3.5 px-6 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
-                  Get started
-                  <svg
-                    className="flex-shrink-0 size-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </button>
-              </Authentication>
+              <button
+                onClick={() => router.push("/login")}
+                className="inline-flex justify-center items-center gap-x-3 text-center bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 py-3.5 px-6 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              >
+                Get started
+                <svg
+                  className="flex-shrink-0 size-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
             ) : (
               <button
                 onClick={() => router.push("/app")}

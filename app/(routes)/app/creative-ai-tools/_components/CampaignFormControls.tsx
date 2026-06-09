@@ -205,7 +205,7 @@ export default function CampaignFormControls({
       <hr className="border-zinc-100 dark:border-zinc-800" />
 
       {/* SECTION: ASPECT RATIO */}
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
           Aspect Ratio
         </label>
@@ -229,7 +229,7 @@ export default function CampaignFormControls({
             );
           })}
         </div>
-      </div>
+      </div> */}
 
       {/* SECTION: DESCRIPTION */}
       <div className="space-y-2">

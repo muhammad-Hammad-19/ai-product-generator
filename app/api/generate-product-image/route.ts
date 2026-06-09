@@ -15,33 +15,67 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/configs/firebaseConfig";
-
 const PRODUCT_LOCK_PROMPT = `
-Create a vibrant product showcase image featuring the uploaded product image in the center, surrounded by dynamic splashes of liquid or relevant material that complements it.
+You are a professional product photography AI.
 
-Use a clean, colorful background to make the product stand out.
+The user has provided a product image and optionally a custom prompt.
 
-Include subtle elements, ingredients, or theme-related objects floating around to add context and visual interest.
+Your task:
+1. Analyze the uploaded product image to identify what the product is (e.g. perfume, food, drink, electronics, skincare, shoes, etc.)
+2. If the user has provided a custom prompt, follow it closely while keeping the product as the focal point.
+3. If NO custom prompt is provided, generate a fitting cinematic product showcase based on the product type:
+   - Beverages/drinks → liquid splashes, ice, bubbles
+   - Food → fresh ingredients, steam, crumbs, spices floating
+   - Perfume/cosmetics → soft bokeh, petals, silk fabric, light diffusion
+   - Electronics/gadgets → clean dark/gradient background, subtle glows, geometric lines
+   - Skincare → clean white/pastel background, water droplets, botanicals
+   - Shoes/fashion → studio lighting, clean background, dramatic shadows
+   - Other products → clean studio-style background with complementary props
 
-Ensure the product is sharp and in focus, with motion and energy conveyed through the splashes.
+Always:
+- Keep the product SHARP and centered
+- Match the visual style to the product category
+- Make it look like a high-end commercial advertisement
 
-Return ONLY valid JSON in this format:
+Return ONLY valid JSON in this format (no extra text, no markdown):
 {
-  "textToImage":"",
-  "imageToVideo":"",
+  "textToImage": "<detailed image generation prompt based on product type and user input>",
+  "imageToVideo": "<short motion description: e.g. slow rotation, zoom in, splash burst>"
 }
-
 `;
 
 const AVATAR_PROMPT = `
-Place this avatar model wearing professional or casual outfit, standing or sitting next to the product in a realistic and natural way.
+You are a professional AI advertisement director.
 
-The avatar should look friendly and engaging, presenting the product seamlessly for a social media advertisement.
+The user has provided:
+1. An avatar/model image
+2. A product image
+3. Optionally a custom prompt
 
-Return ONLY valid JSON in this format:
+Your task:
+1. Analyze the product to understand its category (e.g. skincare, food, electronics, fashion, perfume, etc.)
+2. Analyze the avatar's appearance (gender, style, age group) to match them naturally with the product.
+3. If the user has provided a custom prompt, follow it closely while keeping both the avatar and product prominent.
+4. If NO custom prompt is provided, generate a fitting scene based on product type:
+   - Skincare/Beauty → avatar applying or holding product, soft studio lighting, clean pastel background
+   - Food/Beverage → avatar enjoying or presenting the product, bright kitchen or cafe setting
+   - Perfume/Fragrance → avatar holding bottle elegantly, bokeh background, luxury feel
+   - Electronics/Gadgets → avatar using the product naturally, modern minimal background
+   - Fashion/Shoes → avatar wearing or showcasing item, lifestyle or studio setting
+   - Fitness/Health → avatar in activewear, gym or outdoor setting
+   - Other → avatar standing next to product in a clean, well-lit studio setting
+
+Always:
+- Avatar should look NATURAL and engaged with the product (not stiff or floating)
+- Product must be CLEARLY VISIBLE and in focus
+- Scene should feel like a real social media advertisement
+- Lighting should be consistent between avatar and product
+- Expression should match the product vibe (energetic, calm, luxurious, fun)
+
+Return ONLY valid JSON in this format (no extra text, no markdown):
 {
-  "textToImage":"",
-  "imageToVideo":"",
+  "textToImage": "<detailed scene prompt including avatar description, product placement, background, lighting, mood>",
+  "imageToVideo": "<short motion description: e.g. avatar smiles and holds product toward camera, slow zoom in>"
 }
 `;
 
@@ -107,7 +141,7 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
 
     const buffer = Buffer.from(bytes).toString("base64");
-
+    
     const originalUpload = await imagekit.upload({
       file: buffer,
       fileName: `original-${Date.now()}.jpg`,
@@ -124,7 +158,7 @@ export async function POST(req: NextRequest) {
 
     ${AVATAR_PROMPT}`
         : PRODUCT_LOCK_PROMPT;
-        
+
     const response = await openai.responses.create({
       model: "gpt-4.1-mini",
       input: [
@@ -197,7 +231,7 @@ export async function POST(req: NextRequest) {
         style_id: 4,
         size: apiSize,
       },
-      
+
       {
         headers: {
           "x-rapidapi-key": process.env.RAPID_API_KEY!,

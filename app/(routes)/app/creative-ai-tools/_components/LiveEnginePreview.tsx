@@ -2,7 +2,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Heart, Loader2, Sparkles, Image as ImageIcon, Video as VideoIcon, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Heart,
+  Loader2,
+  Sparkles,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  CheckCircle2,
+} from "lucide-react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { useAuthContext } from "@/app/provider";
 import { db } from "@/configs/firebaseConfig";
@@ -41,8 +49,8 @@ export default function LiveEnginePreview() {
 
         // Sorting: Naye items pehle
         allData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-        setAds(allData || []);
+        const filteredAds = allData.filter((a) => a.generatedImageUrl);
+        setAds(filteredAds);
         setLoading(false);
       },
       (error) => {
@@ -70,14 +78,19 @@ export default function LiveEnginePreview() {
         {
           imageUrl,
           docId: ad?.id,
-          prompt: "A cinematic luxury product advertisement with slow rotation, dramatic lighting, ultra realistic studio look.",
+          prompt:
+            "A cinematic luxury product advertisement with slow rotation, dramatic lighting, ultra realistic studio look.",
         },
         {
           withCredentials: true,
         },
       );
+      console.log(res.data);
+
       if (res.data.success) {
-        alert("Video generation started successfully! Please wait a few moments...");
+        alert(
+          "Video generation started successfully! Please wait a few moments...",
+        );
       } else {
         alert(res.data.error?.message || "Video generation failed");
       }
@@ -92,12 +105,23 @@ export default function LiveEnginePreview() {
   // ==========================================
   // 🎯 STRICT BOUNDARY SEPARATION LOGIC (Cleaned)
   // ==========================================
-  
+
   // 1️⃣ Category: Video Ads
-  const videoAds = ads.filter((ad) => ad.videoUrl || ad.imageToVideoStatus === "completed" || ad.type === "video");
+  const videoAds = ads.filter(
+    (ad) =>
+      ad.videoUrl ||
+      ad.imageToVideoStatus === "completed" ||
+      ad.type === "video",
+  );
 
   // 2️⃣ Category: Pure Images (Avatars merged here implicitly, but without showing faces)
-  const imageAds = ads.filter((ad) => !ad.videoUrl && ad.imageToVideoStatus !== "completed" && ad.type !== "video");
+
+  const imageAds = ads.filter(
+    (ad) =>
+      !ad.videoUrl &&
+      ad.imageToVideoStatus !== "completed" &&
+      ad.type !== "video",
+  );
 
   // ✅ REUSABLE PREMIUM CARD COMPONENT
   const RenderCard = ({ ad }: { ad: any }) => (
@@ -105,11 +129,13 @@ export default function LiveEnginePreview() {
       {/* IMAGE / VIDEO THUMBNAIL */}
       <div className="aspect-square bg-zinc-50 dark:bg-zinc-950 relative overflow-hidden">
         <img
-          src={ad.generatedImageUrl || ad.originalImageUrl || "/placeholder.png"}
+          src={
+            ad.generatedImageUrl || ad.originalImageUrl || "/placeholder.png"
+          }
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           alt="Creative asset"
         />
-        
+
         {/* Avatar badge completely removed from here */}
 
         {ad.videoUrl && (
@@ -123,7 +149,10 @@ export default function LiveEnginePreview() {
       {/* CARD INFO & CONTROL BUTTONS */}
       <div className="p-4 space-y-3 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800/50">
         <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 line-clamp-2 h-8 leading-relaxed group-hover:text-zinc-900 dark:group-hover:text-zinc-200 transition-colors">
-          {ad?.description || ad?.prompts?.textToImage || ad?.prompt || "AI Custom Generated Design Asset"}
+          {ad?.description ||
+            ad?.prompts?.textToImage ||
+            ad?.prompt ||
+            "AI Custom Generated Design Asset"}
         </p>
 
         <div className="flex gap-2 pt-1">
@@ -187,7 +216,6 @@ export default function LiveEnginePreview() {
         </div>
       ) : (
         <div className="space-y-12">
-          
           {/* 1️⃣ SECTION BLOCK: PRODUCT DISPLAYS (PURE IMAGES) */}
           {imageAds.length > 0 && (
             <div className="space-y-4">
@@ -217,7 +245,6 @@ export default function LiveEnginePreview() {
               </div>
             </div>
           )}
-
         </div>
       )}
 
@@ -259,7 +286,11 @@ export default function LiveEnginePreview() {
                   />
                 ) : (
                   <img
-                    src={currentOpenAd.generatedImageUrl || currentOpenAd.originalImageUrl || "/placeholder.png"}
+                    src={
+                      currentOpenAd.generatedImageUrl ||
+                      currentOpenAd.originalImageUrl ||
+                      "/placeholder.png"
+                    }
                     className="w-full h-full object-cover"
                     alt="Expanded Engine Asset Preview"
                   />
@@ -274,7 +305,10 @@ export default function LiveEnginePreview() {
                 </h4>
                 <div className="bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200/80 dark:border-zinc-800/60 p-4 rounded-xl max-h-[100px] overflow-y-auto shadow-sm">
                   <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed font-medium">
-                    {currentOpenAd?.description || currentOpenAd?.prompts?.textToImage || currentOpenAd?.prompt || "Standard blueprint specification parameter applied."}
+                    {currentOpenAd?.description ||
+                      currentOpenAd?.prompts?.textToImage ||
+                      currentOpenAd?.prompt ||
+                      "Standard blueprint specification parameter applied."}
                   </p>
                 </div>
               </div>

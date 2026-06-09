@@ -42,7 +42,8 @@ const UserAdsList = () => {
 
       // Sorting: Naye items hamesha pehle
       data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setAdsList(data);
+      const filter = data.filter((a) => a.generatedImageUrl);
+      setAdsList(filter);
     } catch (error) {
       console.error("Fetch failed:", error);
     } finally {

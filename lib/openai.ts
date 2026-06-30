@@ -1,5 +1,8 @@
-import OpenAI from "openai"; // OpenAI import kiya
+import OpenAI from "openai";
+
+// 1. Typo fixed (OPENAI_API_KEY) aur build crash se bachne ke liye fallback lagaya
+const apiKey = process.env.OPENAI_API_KEY || "placeholder_key_for_build";
 
 export const openai = new OpenAI({
-  apiKey: process.env.OPEN_AI_API_KEY,
+  apiKey: apiKey,
 });

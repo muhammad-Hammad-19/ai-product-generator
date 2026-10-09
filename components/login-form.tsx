@@ -1,8 +1,8 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import Authentication from "@/app/_components/Authentication"
-import Image from "next/image"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import Authentication from "@/app/_components/Authentication";
+import Image from "next/image";
 
 export function LoginForm({
   className,
@@ -12,18 +12,20 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden shadow-lg rounded-2xl">
         <CardContent className="grid p-0 md:grid-cols-2 h-[500px]">
-
           {/* Left Side - Google Login */}
           <div className="relative flex flex-col items-center justify-center p-8 text-center gap-6 bg-white">
-
             {/* Decorative shapes */}
             <div className="absolute top-4 left-4 h-16 w-16 rounded-full bg-pink-200 opacity-70 blur-2xl"></div>
             <div className="absolute bottom-6 right-6 h-20 w-20 rounded-full bg-blue-200 opacity-60 blur-2xl"></div>
 
             <div className="relative z-10">
-              <h1 className="text-3xl font-extrabold text-blue-600">Welcome back 👋</h1>
+              <h1 className="text-3xl font-extrabold text-blue-600">
+                Welcome back 👋
+              </h1>
               <p className="text-muted-foreground mt-2">
-                Sign in to your <span className="font-semibold text-pink-600">Fast NextJs</span> By Hammad
+                Sign in to your{" "}
+                <span className="font-semibold text-pink-600">Fast NextJs</span>{" "}
+                By Hammad
               </p>
             </div>
 
@@ -50,16 +52,16 @@ export function LoginForm({
           {/* Right Side - Image */}
           <div className="relative hidden md:block w-full h-full">
             <Image
-              src="/login.jpg" 
+              src="/image.png"
               alt="Login illustration"
               fill
               priority
-              className="object-cover md:rounded-r-2xl"
+              sizes="(min-width: 768px) 50vw, 0px"
+              className="object-cover"
             />
             {/* subtle overlay for vibrance */}
             <div className="absolute inset-0 bg-white/20 mix-blend-overlay"></div>
           </div>
-
         </CardContent>
       </Card>
 
@@ -68,5 +70,5 @@ export function LoginForm({
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
-  )
+  );
 }
